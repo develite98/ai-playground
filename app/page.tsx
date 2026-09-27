@@ -49,7 +49,7 @@ export default function Home() {
       const target = e.target as HTMLElement;
       if (
         target.closest(
-          'input,textarea,select,button,[role="slider"],[role="switch"],[contenteditable="true"]',
+          'input,textarea,select,[role="slider"],[role="switch"],[contenteditable="true"]',
         )
       )
         return;
