@@ -3,7 +3,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "AI Playground · Từ zero đến aha!",
   description:
-    "24 bước tương tác giúp developer hiểu tìm kiếm, vector, model, RAG và Generative AI.",
+    "26 bước tương tác giúp developer hiểu tìm kiếm, vector, model, RAG và Generative AI.",
   icons: { icon: "/favicon.svg" },
 };
 export default function RootLayout({

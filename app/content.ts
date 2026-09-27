@@ -1,12 +1,11 @@
 export const chapters = [
-  "Tìm kiếm",
-  "Vector",
+  "Trước khi có AI",
+  "Sau khi có AI",
   "Model & LLM",
   "RAG",
   "Generative AI",
 ];
-export const starts = [0, 5, 11, 17, 21];
-export const slides = [
+const lessons = [
   {
     c: 0,
     k: "BẮT ĐẦU TỪ ĐIỀU QUEN THUỘC",
@@ -19,8 +18,8 @@ export const slides = [
   {
     c: 0,
     k: "01 / DUYỆT TỪNG MÓN",
-    t: "Tìm kiếm từ",
-    accent: "con số một.",
+    t: "Tìm kiếm với",
+    accent: "Linear Search",
     p: "Linear Search: đi từ đầu danh sách, kiểm tra từng sản phẩm và giữ lại những món khớp từ bạn gõ.",
     take: "Danh sách càng dài, số lần kiểm tra càng nhiều.",
     note: "Demo so khớp chuỗi con, không phân biệt hoa thường. Muốn lấy tất cả kết quả thì phải duyệt đủ n sản phẩm: O(n). Nếu chỉ lấy kết quả đầu tiên, trường hợp tốt nhất là O(1), xấu nhất O(n). Đây là cách nhập môn, không phải mọi hệ thống trước AI đều tìm kiểu này.",
@@ -28,8 +27,8 @@ export const slides = [
   {
     c: 0,
     k: "02 / THÊM THUỘC TÍNH",
-    t: "Tên gọi chưa đủ.",
-    accent: "Thêm metadata.",
+    t: "Lọc dữ liệu với",
+    accent: "metadata",
     p: "Màu sắc, size, giá và chất liệu giúp diễn đạt điều kiện rõ ràng: áo tím, dưới 400.000đ.",
     take: "Filter kiểm tra điều kiện. Có metadata chưa có nghĩa là tìm nhanh hơn.",
     note: "Metadata là dữ liệu mô tả mỗi bản ghi. Ví dụ color=purple, price=349000. Nếu vẫn lọc từng dòng thì chi phí vẫn tuyến tính. Index phù hợp mới giúp giảm dữ liệu phải đọc. Với nhiều điều kiện AND, sản phẩm phải thỏa tất cả điều kiện.",
@@ -37,8 +36,8 @@ export const slides = [
   {
     c: 0,
     k: "03 / KHỎI LẬT TỪNG TRANG",
-    t: "Làm sẵn một",
-    accent: "mục lục.",
+    t: "Tra cứu với",
+    accent: "inverted index",
     p: "Inverted index lưu “từ này xuất hiện ở sản phẩm nào”. Gõ “áo”, tra thẳng danh sách ID liên quan.",
     take: "Tìm kiếm truyền thống đã có index, full-text và BM25 từ trước AI hiện đại.",
     note: "Inverted index ánh xạ term sang posting list. BM25 xếp hạng dựa trên tín hiệu từ khóa như độ hiếm của từ, tần suất và độ dài tài liệu. Index tốn dung lượng và chi phí cập nhật. SQL B-tree cũng hữu ích với nhiều kiểu lọc có cấu trúc, tùy truy vấn và dữ liệu.",
@@ -221,8 +220,43 @@ export const slides = [
     accent: "chiếc hộp AI.",
     p: "Một trải nghiệm đơn giản có thể là nhiều thành phần phối hợp. Chọn đúng thành phần cho đúng vấn đề.",
     take: "AI không thay mọi thuật toán. Một hệ thống tốt biết kết hợp chúng.",
-    note: "Tài liệu tham khảo được liên kết bên dưới. Bài học dùng số và đầu ra mô phỏng để giữ nội dung dễ hiểu; không benchmark model hay vector DB. Có thể dùng 24 slide cho một buổi chia sẻ 45–60 phút, dừng ở mỗi demo để người nghe dự đoán trước khi bấm.",
+    note: "Tài liệu tham khảo được liên kết bên dưới. Bài học dùng số và đầu ra mô phỏng để giữ nội dung dễ hiểu; không benchmark model hay vector DB. Có thể dùng 26 slide cho một buổi chia sẻ 45–60 phút, dừng ở mỗi demo để người nghe dự đoán trước khi bấm.",
   },
+];
+export type Slide = (typeof lessons)[number] & {
+  demo: number;
+  divider?: "before" | "after";
+};
+const mapped: Slide[] = lessons.map((slide, demo) => ({
+  ...slide,
+  c: demo === 4 ? 1 : slide.c,
+  demo,
+}));
+export const slides: Slide[] = [
+  {
+    c: 0,
+    demo: -1,
+    divider: "before",
+    k: "TÌM KIẾM TRUYỀN THỐNG",
+    t: "Trước khi",
+    accent: "có AI",
+    p: "Bắt đầu với dữ liệu, điều kiện và những phép so sánh.",
+    take: "Linear Search → Metadata → Inverted index",
+    note: "Phần này nói về tìm kiếm chưa dùng model học máy. Đây là một trình tự giải thích, không phải khẳng định mọi hệ thống trước AI đều dùng Linear Search.",
+  },
+  ...mapped.slice(0, 4),
+  {
+    c: 1,
+    demo: -1,
+    divider: "after",
+    k: "KHI THÊM MODEL VÀO HỆ THỐNG",
+    t: "Sau khi",
+    accent: "có AI",
+    p: "Từ so khớp câu chữ đến biểu diễn và tìm kiếm theo ý nghĩa.",
+    take: "Embedding → Vector → Semantic search",
+    note: "AI bổ sung cách biểu diễn ngữ nghĩa. Index, từ khóa và metadata vẫn hữu ích và thường được kết hợp trong cùng hệ thống.",
+  },
+  ...mapped.slice(4),
 ];
 export const products = [
   {

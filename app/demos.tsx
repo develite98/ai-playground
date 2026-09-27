@@ -19,6 +19,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { products, sources } from "./content";
+import DatabaseDemo from "./database-demo";
 type Product = (typeof products)[number];
 function Range({
   label,
@@ -1246,6 +1247,7 @@ function Summary() {
   );
 }
 export function Demo({ index }: { index: number }) {
+  if ([1, 2, 3].includes(index)) return <DatabaseDemo mode={index} />;
   if (index < 5) return <Shop mode={index} />;
   if (pipelines[index]) return <Pipeline index={index} />;
   switch (index) {

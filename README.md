@@ -1,6 +1,6 @@
 # AI Playground — Từ zero đến aha!
 
-Website React + TypeScript + Vite gồm 24 slide tiếng Việt để chia sẻ nền tảng AI cho developer mới bắt đầu. Source chính nằm trong D:\ai-playground.
+Website React + TypeScript + Vite gồm 26 slide tiếng Việt để chia sẻ nền tảng AI cho developer mới bắt đầu. Source chính nằm trong D:\ai-playground.
 
 ## Chạy local
 
@@ -25,26 +25,28 @@ Build tĩnh ở dist/. Có thể đưa thư mục này lên static hosting. Khô
 
 - Nút Tiếp theo / quay lại và phím mũi tên trái, phải (khi không focus control).
 - Nội dung: nhảy đến bất cứ slide nào.
-- Toàn màn hình: trình chiếu nếu browser hỗ trợ.
 - Hiểu thêm một chút: ghi chú kỹ thuật, giới hạn của mô phỏng, nguồn tham khảo.
-- URL #slide-8 mở trực tiếp slide 8.
+- URL #slide-3 mở trực tiếp demo Linear Search.
 - Vector 3D: kéo để xoay hoặc dùng slider; slider hỗ trợ mũi tên và Home/End.
 
 ## Nội dung
 
-1–5: ecommerce, linear search, metadata, inverted index, semantic search.
-6–11: vector, embedding, bản đồ 3D, cosine score, vector DB, offline/online pipeline.
-12–17: model, training/inference, tokenizer → ID → embedding, attention, token generation, temperature.
-18–21: RAG, chunking, hybrid/rerank, trả lời dựa vào nguồn và xử lý thiếu bằng chứng.
-22–24: generative AI, diffusion, câu hỏi tổng kết.
+1: Trước khi có AI.
+2–5: ecommerce, Linear Search trên bảng dữ liệu, metadata, inverted index.
+6: Sau khi có AI.
+7–13: semantic search, vector, embedding, 3D, cosine, vector DB, pipeline.
+14–19: model, training/inference, tokenizer, attention, generation, temperature.
+20–23: RAG, chunking, hybrid/rerank, trả lời dựa vào nguồn.
+24–26: generative AI, diffusion, câu hỏi tổng kết.
 
 Gợi ý thời lượng: 45–60 phút. Trước mỗi thao tác, mời người nghe dự đoán điều gì sẽ xảy ra.
 
 ## Chỉnh sửa
 
-- app/content.ts: nội dung 24 slide, ghi chú, sản phẩm và nguồn.
-- app/demos.tsx: toàn bộ demo tương tác.
-- app/page.tsx: layout, điều hướng, mục lục, fullscreen.
+- app/content.ts: nội dung 26 slide, ghi chú, sản phẩm và nguồn.
+- app/demos.tsx: các demo tương tác.
+- app/database-demo.tsx: bảng dữ liệu, quét từng dòng/tự động, filter và inverted index.
+- app/page.tsx: layout, slide phân đoạn, highlight từ khóa, điều hướng và mục lục.
 - app/globals.css: màu sắc, responsive và chuyển động.
 - app/main.tsx: React entry point.
 - public/hoodie.png: ảnh hoodie được tạo để minh họa (không phải hàng hóa thật).
