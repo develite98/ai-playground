@@ -1,6 +1,6 @@
 # AI Playground — Requirements & Agent Handoff
 
-Cập nhật: 27/09/2026. Tài liệu này ghi lại yêu cầu và các quyết định trong cuộc trao đổi với người dùng, để agent mới có thể tiếp tục mà không cần đọc lại lịch sử chat.
+Cập nhật: 29/09/2026 (tạo 27/09/2026). Tài liệu này ghi lại yêu cầu và các quyết định trong cuộc trao đổi với người dùng, để agent mới có thể tiếp tục mà không cần đọc lại lịch sử chat.
 
 Đọc tài liệu này trước khi thay đổi trải nghiệm học. Sau đó xem `README.md`, `app/content.ts`, `app/page.tsx` và demo liên quan. Các yêu cầu mới trực tiếp từ người dùng có ưu tiên cao hơn bản ghi này.
 
@@ -72,8 +72,8 @@ Cách đã triển khai theo các yêu cầu này:
 - Bỏ header thương hiệu, nút fullscreen và thanh điều hướng phía trên.
 - Bỏ nhãn “Chương” và nhãn bước ở đầu slide nội dung; ưu tiên tiêu đề.
 - Giữ footer với mục lục, tiến độ, nút trước/sau và hướng dẫn phím mũi tên.
-- Thêm slide phân đoạn **“Trước khi có AI”** ở đầu.
-- Thêm slide phân đoạn **“Sau khi có AI”** trước semantic search/vector.
+- Thêm slide phân đoạn **“Trước khi có AI”** ở đầu. *(29/09: đổi tên thành “Tìm theo chữ” và chuyển vào chương Search.)*
+- Thêm slide phân đoạn **“Sau khi có AI”** trước semantic search/vector. *(29/09: đổi tên thành “Tìm theo ý nghĩa”.)*
 - Đổi tiêu đề thành **“Tìm kiếm với Linear Search”**, **“Lọc dữ liệu với metadata”**, **“Tra cứu với inverted index”**.
 - Highlight thuật ngữ chính trong phần giải thích và takeaway (gạch đầu dòng kỹ thuật không highlight, chỉ định dạng `code`).
 - Thay demo Linear Search bằng **bảng `products`**, con trỏ đọc từng dòng, so khớp `true/false`, số lần kiểm tra và tập ID kết quả.
@@ -111,12 +111,38 @@ Người dùng thấy chuyển từ divider “Sau khi có AI” sang vector v�
 
 Demo của slide này **chỉ tập trung vào semantic search**. Người dùng đã từ chối phương án so sánh 2 cột với Linear Search, vì Linear Search vừa được trình bày ở phần trước nên không cần lặp lại. Demo hiện tại:
 
-- Chọn 1 trong 4 câu tìm → các bước sáng lần lượt: Câu tìm → Embedding model → Vector → Tìm lân cận → Top-3.
-- Bản đồ 2D (độ ấm × độ trang trọng, lấy từ `v[0]`, `v[2]` của sản phẩm) có các vùng ý nghĩa. Câu tìm “rơi” xuống thành một điểm, nối tới top-3 theo khoảng cách tính thật.
-- Vòng nét đứt là ngưỡng “đủ gần” (NEAR = 4), để minh họa rằng top-k luôn trả về kết quả kể cả khi món đó ở xa.
-- Cuối demo có link “Mở từng bước” tới Vector → Embedding → Không gian vector → Score → Vector DB.
+- Chọn 1 trong 4 câu tìm → các bước sáng lần lượt: Câu tìm → Embedding model → Vector → Tìm lân cận → Top-k.
+- Người dùng yêu cầu làm **3D** (thay cho bản 2D ban đầu): không gian 3 trục ấm × thoải mái × trang trọng lấy từ `v` của sản phẩm; tự đung đưa ±20° (không xoay 360° để nhãn không đè nhau), kéo để xoay. Khoảng cách Euclid 3D tính thật.
+- Cuối demo có link “Mở từng bước” tới Kho vector → Embedding → Model tự học → Dữ liệu để học → Score.
 - **Top-k và ngưỡng (29/09/2026):** người dùng hỏi dựa vào điều kiện gì mà kết quả dừng ở 3 món, và tại sao Áo thun cotton không vào dù trông gần. Câu trả lời: top-k chỉ xét thứ hạng (áo thun đứng hạng 4, cách 6,1); hình 3D chiếu xuống 2D có thể làm hai điểm xa trông như gần. Slide 8 giờ có: thanh trượt k (1–6), công tắc “Áp dụng ngưỡng” kèm bán kính (vòng nét đứt chỉ hiện và chỉ cắt kết quả khi bật), bảng xếp hạng cả 6 món (✓ trả về / ⭕ ngoài ngưỡng / ✂ ngoài top-k), và nút (?) hover/focus hiện code `vectorDB.search({ limit, scoreThreshold, filter })` → `rerank` → `fitTokenBudget` cùng bảng “Lớp · Giới hạn theo · Ví dụ”. Người dùng yêu cầu dùng đúng đoạn code họ gửi. Thêm gạch đầu dòng dev về `LIMIT` trong pgvector.
 - Ở bản VI, tọa độ viết dạng `[8; 3,2]`, dùng dấu chấm phẩy để không lẫn với dấu phẩy thập phân.
+
+### Cốt truyện 5 chương (29/09/2026)
+
+Người dùng chốt cốt truyện mới để các phần nối với nhau. Nguyên nhân: chính họ từng hiểu nhầm vector DB là trọng số của LLM, và người đọc slide cũng dễ nhầm như vậy.
+
+0. **Bức tranh tổng**: 4 khối 💻 App · 🔎 Search · 📋 Bàn (context) · 🧠 LLM, cộng câu trả lời. Ví von **thi mở sách**: kiến thức trong đầu (trọng số), thư viện (dữ liệu / vector DB), vài trang trên bàn (context); app là thủ thư.
+1. **LLM: bộ não** (kèm “mổ xẻ” theo yêu cầu): Model là hàm đã học → Training → **Tham số là gì** (so sánh model thật) → Từ prompt đến code → Token → **Bên trong LLM** (32 lớp) → Attention → Sinh token → Temperature → **Model nhớ gì? Model đọc gì?** (cầu nối: LLM nhớ mơ hồ, đóng băng, không biết dữ liệu riêng, nên cần search).
+2. **Search: tìm gì để đặt lên bàn?**: gồm hai phân đoạn con **“Tìm theo chữ”** và **“Tìm theo ý nghĩa”**. Người dùng đã đồng ý đổi tên từ “Trước / Sau khi có AI”.
+3. **RAG: đặt lên bàn.**
+4. **Ghép lại**: slide prompt→code bản đầy đủ (lesson 31, mặc định bật RAG và Ranh giới) → GenAI → Diffusion → Tổng kết. Slide “Một câu hỏi đi xuyên hệ thống” (lesson 23) đã gỡ khỏi flow, code vẫn giữ.
+
+Kỹ thuật:
+- Phân đoạn chương có `divider: "chapter"`, `id` (khóa lấy bản EN trong `dividersEn`) và `focus` để làm sáng khối tương ứng trên `StoryMap` (xuất từ `demos.tsx`, dùng chung với slide mở đầu).
+- Hàm `chapter(c, items)` gán `c` theo thứ tự trình chiếu, **không** dùng `c` trong dữ liệu bài học.
+- Không dùng chữ “Chương” trên giao diện (yêu cầu cũ vẫn giữ). Tên chương chỉ hiện trong mục lục.
+- Tránh nói “LLM chứa dữ liệu khổng lồ”. Cách nói đúng: LLM *học* từ dữ liệu khổng lồ, kiến thức được nén vào trọng số và không giữ bản gốc để tra cứu.
+
+### Từ điển LLM và ví dụ training thật (29/09/2026)
+
+- **Slide 2 “Từ điển nhỏ khi làm việc với LLM”** (lesson 34, demo `Glossary`): người dùng yêu cầu đặt ở vị trí 2 và gửi kèm bảng thuật ngữ. Gồm 14 từ: Token, Tokenizer, Prompt, System prompt, Context window, Input/output tokens, Inference, Parameters/weights, Temperature, Embedding, RAG, Tool/function calling, Fine-tuning, Hallucination. Mỗi từ có giải thích bằng lời thường (dùng lời của người dùng), ví dụ, và link tới slide nói kỹ về nó.
+- **Context window** có biểu đồ so sánh, lấy từ tài liệu chính thức ngày 29/09/2026: Claude Opus 5.5 1M (output 128K), Claude Haiku 4.5 200K (64K), Gemini 3.1 Pro 1M (64K), GPT-6 Sol 1,05M (128K). Người dùng hỏi “Gemini khác gì Opus”: câu trả lời đúng là **các model hàng đầu hiện đều khoảng 1M**; khác nhau ở output tối đa, giá và tokenizer. Cách so sánh cũ “Gemini 1M, Claude 200K” đã lỗi thời. **Các số này thay đổi theo từng đời model: cần kiểm tra lại trước mỗi buổi trình bày.**
+- **Slide Training (slide 5):** người dùng thấy ví dụ `y = w·x` chỉ đọc hiểu chứ không “thấm”. Đã thêm tab mặc định “Ví dụ thật: đoán chữ tiếp theo”: câu trong dữ liệu train bị che chữ cuối, bấm “Học một bước” thì xác suất của đáp án tăng (21% → 57% → 76% → …) và loss giảm. Gradient softmax được tính thật trên 4 điểm số. Tab “1 núm vặn w” cũ vẫn giữ, vì slide Tham số nhắc lại ví dụ này.
+
+### Mổ xẻ LLM (29/09/2026)
+
+- **Tham số là gì** (lesson 32, demo `ParamScale`): nối từ demo 1 tham số `w`, rồi đến biểu đồ thang log gồm GPT-2 1,5B, Mistral 7B, Llama 3.1 8B/70B/405B, Gemma 2 27B, Mixtral 47B (13B hoạt động), GPT-3 175B, DeepSeek-V3 671B (37B hoạt động). GPT-4o, Claude, Gemini ghi “không công bố”. Mọi con số đều lấy từ bài báo gốc (đã đối chiếu abstract arXiv). Rê hoặc bấm từng dòng để xem dung lượng ước lượng (16-bit ≈ 2 byte/tham số, 4-bit ≈ 0,55) và máy có thể chạy.
+- **Bên trong LLM** (lesson 33, demo `InsideLLM`): input “Mình thích lập”, thanh trượt lớp 0–32. Vector của từng token đổi màu và trộn ngữ cảnh theo lớp. Ô “nếu dừng ở lớp này thì đoán gì” mô phỏng logit lens (lập → trình). Thanh tỷ lệ tham số lấy từ config Llama 3.1 8B: embedding 0,53B · 32 lớp 6,98B · logits 0,53B, tổng 8,03B.
 
 ### Đối tượng người đọc (28/09/2026)
 
@@ -161,44 +187,62 @@ Người dùng yêu cầu một slide **không có chữ**, chỉ có graph anim
 - Source chính: **`D:\ai-playground`**.
 - Website đã triển khai: **https://ai-playground-dev.phongcao3091998.chatgpt.site**.
 - Lần kiểm tra gần nhất: quyền xem riêng tư, chỉ owner. Không tự chuyển sang public hoặc mở rộng người xem.
-- Giao diện hiện có **29 slide**, gồm 27 bài/demo và 2 slide phân đoạn.
-- Code ứng dụng đã xuất bản gần nhất trước tài liệu này: commit `d47e181d8835e8c1603fb0bc2b85956e2023f86b`.
-- Các yêu cầu giao diện/nội dung đã nêu ở trên đã được thực hiện; không có tính năng đang được hứa nhưng chưa làm trong cuộc trao đổi này.
-- Yêu cầu hiện tại chỉ là tạo tài liệu bàn giao trong source. Thêm tài liệu không yêu cầu đổi giao diện hay xuất bản lại website.
+- Giao diện hiện có **38 slide**, chia 5 chương theo cốt truyện (xem mục “Cốt truyện 5 chương”).
+- **Website đang deploy là bản cũ** (commit `d47e181`, 26 slide). Mọi thay đổi từ 27/09 trở đi mới chỉ có ở local. Không tự deploy; hỏi người dùng trước.
+- Mốc commit: `ec8b94b` (code: i18n, semantic search 3D, stage prompt→code…) và `301d1bb` (tài liệu). Phần làm sau đó (cốt truyện 5 chương, mổ xẻ LLM, từ điển, training thật) có thể chưa commit: kiểm tra `git status` / `git log` trước khi làm tiếp.
+- Các yêu cầu đã nêu trong tài liệu này đều đã được thực hiện.
+
+### Việc còn dở / đã đề xuất nhưng chưa làm
+
+- Rà lại phần chữ chính của các slide cũ (Token, Attention, Sinh token, Temperature, Chunking, Hybrid, GenAI, Diffusion) theo nguyên tắc “người ít kỹ thuật đọc vẫn hiểu”. Mới làm cho slide 1–6, 13 và phần Search.
+- Code không còn trong flow: lesson 5 (trà sữa/lẩu), 7 (không gian 3D cũ), 23 (Một câu hỏi đi xuyên hệ thống), nhánh `Shop` mode 1–3, icon import không dùng (`Code2`, `Send`, `MousePointer2`), CSS `.topbar` / `.chapterbar`, `app/layout.tsx`. Chỉ xóa khi người dùng đồng ý.
+- 3 lỗi lint có sẵn ở `app/database-demo.tsx` (setState trong effect; dấu `"` chưa escape).
+- `.playwright-mcp/` (ảnh chụp kiểm tra) chưa được gitignore; không commit thư mục này.
+- Trên mobile, chữ trong các stage SVG lớn (prompt→code, bản đồ 3D) khá nhỏ.
+- Số liệu context window ở slide Từ điển cần kiểm tra lại trước mỗi buổi trình bày.
 
 ### Thứ tự slide hiện tại (đánh số từ 1)
 
-| Slide | Nội dung |
-| --- | --- |
-| 1 | Trước khi có AI |
-| 2 | Giới thiệu ví dụ tìm quần áo |
-| 3 | Linear Search trên bảng dữ liệu |
-| 4 | Metadata và filter |
-| 5 | Inverted index |
-| 6 | Tìm theo ý nghĩa: “áo đi Đà Lạt” (vấn đề khép lại phần 1) |
-| 7 | Sau khi có AI |
-| 8 | Tổng quan semantic search trong không gian 3D (flow 5 bước, top-3, ngưỡng) |
-| 9 | Không gian là kho dữ liệu: vector database (bấm điểm ↔ dòng id/vector/payload) |
-| 10 | Ai đặt các điểm vào? Embedding model + đưa sản phẩm mới vào kho |
-| 11 | Model học cách xếp chỗ: người chấm điểm tay vs tự học (contrastive, tính thật 2D) |
-| 12 | Dữ liệu để học đến từ đâu: timeline 2009–2024 + “Đúng hay hiểu nhầm?” |
-| 13 | Cosine similarity trên vector sản phẩm |
-| 14 | Pipeline chuẩn bị dữ liệu và truy vấn (tóm tắt) |
-| 15 | Từ prompt đến code: slide chỉ có hình, animation một lượt gọi LLM, kết thúc bằng Chat response và file code |
-| 16 | Model là gì |
-| 17 | Training và inference |
-| 18 | Text → token → ID → embedding |
-| 19 | Attention và ngữ cảnh (causal) |
-| 20 | Sinh từng token |
-| 21 | Temperature và sampling |
-| 22 | RAG |
-| 23 | Chunking |
-| 24 | Hybrid search (RRF)/rerank |
-| 25 | Hỏi đáp dựa trên nguồn; top-1 bỏ sót; thiếu bằng chứng |
-| 26 | Generative AI |
-| 27 | Minh họa diffusion |
-| 28 | Một câu hỏi đi xuyên hệ thống |
-| 29 | Tổng kết/quiz |
+| Slide | Chương | Nội dung |
+| --- | --- | --- |
+| 1 | Bức tranh tổng | Phía sau một câu trả lời AI. |
+| 2 | Bức tranh tổng | Từ điển nhỏ khi làm việc với LLM. |
+| 3 | LLM: bộ não | [phân đoạn chương] LLM: bộ não. |
+| 4 | LLM: bộ não | Model là một hàm đã học. |
+| 5 | LLM: bộ não | Dự đoán. Đo sai. Điều chỉnh. |
+| 6 | LLM: bộ não | Tham số là những núm vặn đã học. |
+| 7 | LLM: bộ não | Từ prompt đến code. (full-width) |
+| 8 | LLM: bộ não | Chữ → token → ID → vector. |
+| 9 | LLM: bộ não | Đi xuyên 32 lớp. |
+| 10 | LLM: bộ não | Cùng một từ. Khác ngữ cảnh. |
+| 11 | LLM: bộ não | Từng token. Rồi từng token. |
+| 12 | LLM: bộ não | Có nhiều cách viết tiếp. |
+| 13 | LLM: bộ não | Model nhớ gì? Model đọc gì? |
+| 14 | Search: tìm tài liệu | [phân đoạn chương] Search: tìm gì để đặt lên bàn? |
+| 15 | Search: tìm tài liệu | Khi bạn bấm tìm kiếm, máy làm gì? |
+| 16 | Search: tìm tài liệu | [phân đoạn] Tìm theo chữ |
+| 17 | Search: tìm tài liệu | Tìm kiếm với Linear Search |
+| 18 | Search: tìm tài liệu | Lọc dữ liệu với metadata |
+| 19 | Search: tìm tài liệu | Tra cứu với inverted index |
+| 20 | Search: tìm tài liệu | “Đi Đà Lạt” đâu có trong tên? |
+| 21 | Search: tìm tài liệu | [phân đoạn] Tìm theo ý nghĩa |
+| 22 | Search: tìm tài liệu | Cùng một câu tìm. Hai cách hiểu. |
+| 23 | Search: tìm tài liệu | Không gian này là một kho dữ liệu. |
+| 24 | Search: tìm tài liệu | Ai đặt các điểm vào không gian? |
+| 25 | Search: tìm tài liệu | Embedding model học cách xếp chỗ thế nào? |
+| 26 | Search: tìm tài liệu | Dữ liệu để học đến từ đâu? |
+| 27 | Search: tìm tài liệu | Score là một phép đo. |
+| 28 | Search: tìm tài liệu | Hai luồng chạy ở phía dưới. |
+| 29 | RAG: đặt lên bàn | [phân đoạn chương] RAG: đặt tài liệu lên bàn. |
+| 30 | RAG: đặt lên bàn | Cho AI đọc đúng tài liệu. |
+| 31 | RAG: đặt lên bàn | Cắt vừa đủ. Giữ ngữ cảnh. |
+| 32 | RAG: đặt lên bàn | Lấy ứng viên. Chọn phần liên quan. |
+| 33 | RAG: đặt lên bàn | Tìm trước. Trả lời có nguồn. |
+| 34 | Ghép lại | [phân đoạn chương] Ghép lại các mảnh. |
+| 35 | Ghép lại | Toàn bộ hệ thống. (full-width) |
+| 36 | Ghép lại | Tìm cái đã có. Tạo điều tiếp theo. |
+| 37 | Ghép lại | Từ nhiễu. Dần thành hình. |
+| 38 | Ghép lại | Bạn đã mở được chiếc hộp AI. |
 
 Gợi ý 45–60 phút là ước lượng của agent cho cách trình bày, không phải thời lượng bắt buộc từ người dùng.
 
@@ -206,7 +250,7 @@ Gợi ý 45–60 phút là ước lượng của agent cho cách trình bày, kh
 
 Đây là những điều đã được chỉnh/giải thích khi chuyển ý tưởng ban đầu thành nội dung:
 
-- “Trước khi có AI” là cách phân đoạn do người dùng yêu cầu. Diễn giải là **tìm kiếm chưa dùng model học máy**, không khẳng định lịch sử tìm kiếm chỉ có Linear Search.
+- Phân đoạn “Tìm theo chữ” (trước đây “Trước khi có AI”) là **tìm kiếm chưa dùng model học máy**, không khẳng định lịch sử tìm kiếm chỉ có Linear Search.
 - Tìm kiếm truyền thống đã có index, full-text, BM25, từ đồng nghĩa. AI không thay thế toàn bộ các cách đó.
 - Metadata mô tả bản ghi và phục vụ filter; tự thêm metadata không làm truy vấn nhanh hơn nếu vẫn quét tất cả bản ghi.
 - Vector là một bộ số có thứ tự. Các chiều có tên như “độ ngọt” chỉ là ví dụ trực giác; chiều của embedding học được thường không có tên đơn giản.
@@ -236,16 +280,18 @@ Text → tokenizer → token IDs → token embeddings + thông tin vị trí
 **Có tính toán trực tiếp trên dữ liệu nhỏ:**
 
 - Linear Search, filter, lookup posting list đã dựng từ catalog.
-- Xoay/chiếu tọa độ 3D lên SVG; tìm láng giềng Euclidean với vector tự đặt.
-- Cosine giữa query và vector của 6 sản phẩm.
+- Xoay/chiếu tọa độ 3D lên SVG; láng giềng Euclid, top-k và ngưỡng với vector tự đặt.
+- Cosine giữa query và vector của 6 sản phẩm; cosine trong làn RAG của slide prompt→code.
 - Đếm từ trùng (đơn giản hóa keyword/BM25) và RRF với k = 60.
-- Gradient descent cho một trọng số với squared loss.
+- Gradient descent cho một trọng số với squared loss; gradient softmax cross-entropy ở tab “đoán chữ tiếp theo”.
+- Contrastive learning trên 2D (lò xo 1,2 / đẩy khi gần hơn 4).
 - Softmax theo temperature và lấy mẫu.
+- Số tham số, tỷ lệ tham số và dung lượng ước lượng (từ số công bố và config Llama 3.1 8B).
 
 **Đầu ra mô phỏng giáo dục:**
 
 - Embedding, token/ID, trọng số attention (dựng tay nhưng causal).
-- Văn bản sinh theo kịch bản, thứ hạng vector/rerank, câu trả lời RAG, dữ liệu từng bước ở slide “đi xuyên hệ thống”.
+- Văn bản sinh theo kịch bản, thứ hạng vector/rerank, câu trả lời RAG, câu trả lời ở slide “Model nhớ gì / đọc gì”, token/ID/logits ở slide prompt→code, dự đoán theo lớp (logit lens) ở slide “Bên trong LLM”.
 - Diffusion dùng ảnh hoodie có sẵn với lớp nhiễu và blur. Không phải intermediate output của model.
 
 Bản đồ 3D không dùng WebGL/Three.js: tọa độ 3D thật của dữ liệu tự đặt được chiếu lên SVG và xoay tương tác. Không phải giảm chiều embedding thật. Ảnh `public/hoodie.png` là asset đã tạo riêng cho demo, không phải dữ liệu sản phẩm thật.
@@ -275,9 +321,11 @@ Stack hoạt động: **React + TypeScript + Vite**, Tailwind/CSS, Lucide, một
 ### Lưu ý dễ làm sai khi thêm slide
 
 - `index` trong page là vị trí hiện tại của mảng `slides`; URL là `#slide-${index + 1}`.
-- Mỗi bài có **`demo` riêng** trỏ tới demo gốc. Hai divider có `demo: -1` và `divider: 'before' | 'after'`.
-- Render demo bằng `slide.demo`, **không dùng index của mảng slide**, vì đã chèn thêm hai divider.
-- `c` là nhóm dùng cho mục lục. Biến code vẫn tên `chapters`, nhưng UI không hiển thị từ “Chương”.
+- Mỗi bài có **`demo` riêng** (= index trong `lessons`). Divider có `demo: -1`, `divider: "chapter" | "before" | "after"` và `id` (khóa của `dividersEn`); divider chương có thêm `focus` cho `StoryMap`.
+- Render demo bằng `slide.demo`, **không dùng index của mảng slide**.
+- `c` (chương trong mục lục) do hàm `chapter(c, items)` gán theo thứ tự trình chiếu trong `slidesVi`; `c` trong dữ liệu bài học không còn ý nghĩa. UI không hiển thị từ “Chương”.
+- Slide chỉ có hình dùng `full: true` (không cột chữ, demo render trực tiếp, không có card).
+- Thành phần dùng chung trong `demos.tsx`: `useT` (i18n), `Top`, `Hint`, `Range`, `project3d` / `useOrbit` / `SpaceGrid` (3D), `StoryMap` (bản đồ 4 khối, cũng dùng trong `page.tsx`), `dot` / `norm` (cosine).
 - Dùng `slides.length` cho progress/nút cuối; không hardcode số slide trong logic. Bài mới nên **thêm vào cuối `lessons`** (và cuối `lessonsEn`) rồi đặt vị trí trong `slidesVi`, để không làm lệch index `demo` của các bài có sẵn; nhớ thêm `case` trong `switch` của `Demo`. Ví dụ: bài tổng quan semantic search là `demo 25` nhưng hiển thị ở slide 8.
 - Arrow keys chuyển slide, nhưng không chiếm phím của input/slider/switch. Chuyển slide reset scroll để mobile không bị giữ vị trí cũ.
 
@@ -320,6 +368,12 @@ node 'C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js' run build
 - Đã thử vector slider, cosine ở 180° = -1, training giảm loss, RAG thiếu nguồn, diffusion slider và mục lục.
 - Đã kiểm tra mobile khoảng 390px; không tràn ngang toàn trang. Bảng có wrapper riêng để xử lý không gian nhỏ.
 - Không phát hiện console error trong lượt kiểm tra cuối của bản cập nhật.
+
+**Từ 28/09: người dùng tự test giao diện; không dùng Playwright.** Agent chỉ chạy `npm.cmd run build` và eslint, cộng thêm kiểm tra dữ liệu bằng Node, ví dụ in thứ tự slide và phát hiện chữ tiếng Việt còn sót trong bản EN:
+
+```bash
+node scripts/check-slides.mjs   # thứ tự slide theo chương (VI | EN); exit 1 nếu bản EN còn chữ tiếng Việt
+```
 
 Đây là ghi nhận kiểm tra trước đó, không phải bảo đảm cho mọi chỉnh sửa tương lai. Với thay đổi mới, build và kiểm tra đúng interaction bị ảnh hưởng; không cần viết unit test cho việc sửa văn bản/tài liệu đơn giản.
 

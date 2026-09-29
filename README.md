@@ -1,10 +1,10 @@
 # AI Playground — Từ zero đến aha!
 
-Website React + TypeScript + Vite gồm 29 slide (tiếng Việt, có bản tiếng Anh) để chia sẻ nền tảng AI cho developer mới bắt đầu. Source chính nằm trong D:\ai-playground.
+Website React + TypeScript + Vite gồm 38 slide (tiếng Việt, có bản tiếng Anh) để chia sẻ nền tảng AI cho developer mới bắt đầu. Source chính nằm trong D:\ai-playground.
 
 ## Context cho agent tiếp tục
 
-Đọc [Requirements & Agent Handoff](docs/AGENT-HANDOFF.md) để nắm yêu cầu ban đầu, các chỉnh sửa đã chốt, cấu trúc code và lưu ý kỹ thuật.
+Đọc [Requirements & Agent Handoff](docs/AGENT-HANDOFF.md) để nắm yêu cầu ban đầu, các chỉnh sửa đã chốt, cấu trúc code và lưu ý kỹ thuật. Tóm tắt quy ước cho agent nằm ở [CLAUDE.md](CLAUDE.md). Kiểm tra nhanh thứ tự slide và bản EN: `node scripts/check-slides.mjs`.
 
 ## Chạy local
 
@@ -36,21 +36,19 @@ Build tĩnh ở dist/. Có thể đưa thư mục này lên static hosting. Khô
 
 ## Nội dung
 
-1: Trước khi có AI.
-2–6: ecommerce, Linear Search trên bảng dữ liệu, metadata, inverted index, “áo đi Đà Lạt” (vấn đề keyword chưa giải được).
-7: Sau khi có AI.
-8: tổng quan semantic search — câu tìm thành một điểm trong không gian 3D, tìm top-3 lân cận.
-9–14: kho vector (vector DB), embedding đặt điểm vào kho, model tự học cách xếp chỗ, dữ liệu để học đến từ đâu, cosine, pipeline.
-15: từ prompt đến code — animation toàn bộ một lượt gọi LLM (slide chỉ có hình).
-16–21: model, training/inference, tokenizer, attention (causal), generation, temperature.
-22–25: RAG, chunking, hybrid (RRF)/rerank, trả lời dựa vào nguồn.
-26–29: generative AI, diffusion, một câu hỏi đi xuyên hệ thống, câu hỏi tổng kết.
+Cốt truyện 5 chương, 38 slide:
+
+1–2: Bức tranh tổng (App · Search · Bàn · LLM, ví von thi mở sách) và từ điển từ khóa LLM (có so sánh context window).
+3–13: LLM, bộ não — model, training (đoán chữ tiếp theo), tham số (so sánh model thật), từ prompt đến code, token, bên trong 32 lớp, attention, sinh token, temperature, model nhớ gì / đọc gì.
+14–28: Search — tìm theo chữ (linear search, metadata, inverted index) và tìm theo ý nghĩa (tổng quan 3D, kho vector, embedding, embedding model tự học, dữ liệu để học, score, hai luồng).
+29–33: RAG — đặt tài liệu lên bàn, chunking, hybrid/rerank, trả lời có nguồn.
+34–38: Ghép lại — toàn bộ hệ thống (RAG + ranh giới app/server/LLM), generative AI, diffusion, tổng kết.
 
 Gợi ý thời lượng: 45–60 phút. Trước mỗi thao tác, mời người nghe dự đoán điều gì sẽ xảy ra.
 
 ## Chỉnh sửa
 
-- app/content.ts: nội dung 29 slide, gạch đầu dòng kỹ thuật (dev), sản phẩm và nguồn (mỗi bài chọn nguồn qua refs).
+- app/content.ts: nội dung 38 slide, gạch đầu dòng kỹ thuật (dev), sản phẩm và nguồn (mỗi bài chọn nguồn qua refs).
 - app/content-en.ts: bản tiếng Anh của từng bài (cùng thứ tự với lessons trong content.ts).
 - app/i18n.tsx: context ngôn ngữ và hook useT() → t(vi, en), num().
 - app/demos.tsx: các demo tương tác.
