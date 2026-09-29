@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { products, getSlides } from "./content";
+import { products, getSlides, type StoryFocus } from "./content";
 import DatabaseDemo from "./database-demo";
 import { useT, type Lang } from "./i18n";
 type Product = (typeof products)[number];
@@ -2333,14 +2333,15 @@ const p2cTips: Record<
 const P2C_PANEL_W = 380;
 const P2C_TIP_W = 480,
   P2C_TIP_H = 300;
-function PromptToCode() {
+function PromptToCode({ full = false }: { full?: boolean }) {
   const { t, lang } = useT();
   const reduced =
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   // Reduced motion starts paused on the finished state.
-  const [rag, setRag] = useState(false),
-    [zones, setZones] = useState(false);
+  // The finale shows everything: RAG lane and boundaries start switched on.
+  const [rag, setRag] = useState(full),
+    [zones, setZones] = useState(full);
   const mode = rag ? "on" : "off";
   const schedule = p2cSchedules[mode],
     p2cTotal = p2cTotals[mode];
@@ -2549,6 +2550,10 @@ function PromptToCode() {
                 markerEnd="url(#p2c-arrow)"
               />
             ))}
+            {/* Only the documents' TEXT goes into the prompt, never the vectors. */}
+            <text className="p2c-rag-note" x="592" y="228" textAnchor="middle">
+              {t("📄 chữ của tài liệu → prompt", "📄 the documents' text → prompt")}
+            </text>
             <g
               className={"p2c-tile p2c-hot" + (active === "remb" ? " on" : "")}
               style={{ "--c": "#3fa57a" } as React.CSSProperties}
@@ -3139,6 +3144,716 @@ function wrapWords(text: string, width: number) {
   }
   return [...lines, line];
 }
+// The story's four parts (plus the answer), reused on the opening slide and
+// on every chapter divider with the current chapter highlighted.
+type StoryBlock = {
+  key: string;
+  icon: string;
+  vi: { name: string; role: string; like: string; detail: string };
+  en: { name: string; role: string; like: string; detail: string };
+  chapter: string;
+};
+export const storyBlocks: StoryBlock[] = [
+  {
+    key: "app",
+    icon: "💻",
+    chapter: "ch-end",
+    vi: {
+      name: "App",
+      role: "nhận câu hỏi, điều phối",
+      like: "thủ thư",
+      detail: "Giao diện chat hoặc IDE, gồm cả frontend và backend. Nhận câu hỏi, giữ lịch sử hội thoại, gọi search, đặt tài liệu lên bàn, gửi cho LLM, rồi hiển thị câu trả lời.",
+    },
+    en: {
+      name: "App",
+      role: "takes the question, coordinates",
+      like: "the librarian",
+      detail: "The chat UI or IDE, frontend and backend. Takes the question, keeps the conversation history, calls search, puts documents on the desk, sends everything to the LLM, then shows the answer.",
+    },
+  },
+  {
+    key: "search",
+    icon: "🔎",
+    chapter: "ch-search",
+    vi: {
+      name: "Search",
+      role: "tìm tài liệu của bạn",
+      like: "thư viện + mục lục",
+      detail: "Tìm trong dữ liệu của bạn (catalog, tài liệu, codebase) những đoạn liên quan tới câu hỏi: theo chữ (linear search, index) hoặc theo ý nghĩa (vector database).",
+    },
+    en: {
+      name: "Search",
+      role: "finds your documents",
+      like: "the library + catalog",
+      detail: "Finds the passages in your data (catalog, docs, codebase) related to the question: by words (linear search, indexes) or by meaning (vector database).",
+    },
+  },
+  {
+    key: "desk",
+    icon: "📋",
+    chapter: "ch-rag",
+    vi: {
+      name: "Bàn · context",
+      role: "những gì model được đọc",
+      like: "vài trang giấy trên bàn",
+      detail: "Câu hỏi, hướng dẫn và chữ của các đoạn tài liệu tìm được, ghép thành một đoạn văn gửi cho model. Bàn có giới hạn kích thước (context window).",
+    },
+    en: {
+      name: "Desk · context",
+      role: "what the model gets to read",
+      like: "a few pages on the desk",
+      detail: "The question, instructions and the text of the documents found, joined into one text sent to the model. The desk has a size limit (the context window).",
+    },
+  },
+  {
+    key: "llm",
+    icon: "🧠",
+    chapter: "ch-llm",
+    vi: {
+      name: "LLM",
+      role: "bộ não viết câu trả lời",
+      like: "kiến thức trong đầu",
+      detail: "Đọc mọi thứ trên bàn rồi viết câu trả lời mới, từng chữ một, bằng kiến thức và kỹ năng học từ trước (trọng số). Không tự vào thư viện.",
+    },
+    en: {
+      name: "LLM",
+      role: "the brain that writes",
+      like: "knowledge in your head",
+      detail: "Reads everything on the desk, then writes a new answer word by word, using knowledge and skills learned earlier (its weights). It never walks into the library itself.",
+    },
+  },
+  {
+    key: "answer",
+    icon: "💬",
+    chapter: "ch-end",
+    vi: {
+      name: "Câu trả lời",
+      role: "chữ, code, hình ảnh",
+      like: "bài làm",
+      detail: "App nhận từng mảnh chữ và hiển thị dần; code có thể được ghi thẳng vào file.",
+    },
+    en: {
+      name: "Answer",
+      role: "text, code, images",
+      like: "the exam answer",
+      detail: "The app receives the text piece by piece and shows it as it arrives; code may be written straight into a file.",
+    },
+  },
+];
+const storyFocus: Record<StoryFocus, string[]> = {
+  llm: ["llm"],
+  search: ["search"],
+  desk: ["app", "desk"],
+  all: storyBlocks.map((b) => b.key),
+};
+export function StoryMap({
+  focus,
+  selected,
+  onSelect,
+  pulse = -1,
+}: {
+  focus?: StoryFocus;
+  selected?: string;
+  onSelect?: (key: string) => void;
+  pulse?: number;
+}) {
+  const { lang } = useT();
+  const lit = focus ? storyFocus[focus] : [];
+  return (
+    <ol className={"story-map" + (focus ? " focused" : "")}>
+      {storyBlocks.map((b, i) => {
+        const text = b[lang];
+        const cls =
+          (lit.includes(b.key) ? " on" : "") +
+          (selected === b.key ? " selected" : "") +
+          (pulse === i ? " pulse" : "");
+        const body = (
+          <>
+            <span className="story-icon">{b.icon}</span>
+            <b>{text.name}</b>
+            <small>{text.role}</small>
+            <em>≈ {text.like}</em>
+          </>
+        );
+        return (
+          <li key={b.key} className={cls}>
+            {onSelect ? (
+              <button aria-pressed={selected === b.key} onClick={() => onSelect(b.key)}>
+                {body}
+              </button>
+            ) : (
+              <div>{body}</div>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+function BigPicture() {
+  const { t, lang } = useT();
+  const [sel, setSel] = useState("llm"),
+    [pulse, setPulse] = useState(0);
+  // A light pulse walks along the chain to show the direction of flow.
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = setInterval(() => setPulse((n) => (n + 1) % storyBlocks.length), 900);
+    return () => clearInterval(timer);
+  }, []);
+  const slides = getSlides(lang);
+  const block = storyBlocks.find((b) => b.key === sel)!;
+  const n = slides.findIndex((x) => x.id === block.chapter) + 1;
+  return (
+    <>
+      <Top
+        title={t("Bốn phần phối hợp", "Four parts working together")}
+        tag={t("BẤM TỪNG PHẦN", "CLICK EACH PART")}
+      />
+      <StoryMap selected={sel} onSelect={setSel} pulse={pulse} />
+      <div className="story-detail" aria-live="polite">
+        <span>{block.icon}</span>
+        <div>
+          <b>{block[lang].name}</b>
+          <p>{block[lang].detail}</p>
+          <small>
+            {t("Ví von:", "Analogy:")} <i>{block[lang].like}</i> ·{" "}
+            <a href={`#slide-${n}`}>
+              {t("xem phần này", "go to this part")} → {n}
+            </a>
+          </small>
+        </div>
+      </div>
+      <Hint>
+        {t(
+          "Ví dụ “Viết nút Like cho dự án”: app nhận câu hỏi → search tìm các button có sẵn → đặt lên bàn → LLM viết code → code hiện trong editor.",
+          "Example “Write a Like button for my project”: the app takes it → search finds existing buttons → puts them on the desk → the LLM writes code → the code shows up in the editor.",
+        )}
+      </Hint>
+    </>
+  );
+}
+// "What the model remembers vs what it reads": scripted answers.
+const memDocs = [
+  { id: "C1", vi: "Hoodie lavender · nỉ · 349.000đ", en: "Lavender hoodie · fleece · 349,000 VND" },
+  { id: "C2", vi: "Áo len tím · 379.000đ", en: "Purple wool shirt · 379,000 VND" },
+  { id: "C3", vi: "Đổi size trong 7 ngày, còn tem", en: "Size exchange within 7 days, tags on" },
+  { id: "C4", vi: "Bảng size S / M / L", en: "Size chart S / M / L" },
+];
+const memQuestions = [
+  {
+    doc: "C1",
+    vi: "Hoodie lavender giá bao nhiêu?",
+    en: "How much is the lavender hoodie?",
+    guess: {
+      vi: "Mình không chắc giá chính xác, có thể khoảng 300–400k?",
+      en: "I'm not sure of the exact price, maybe around 300–400k?",
+    },
+    read: { vi: "Hoodie lavender giá 349.000đ [C1].", en: "The lavender hoodie costs 349,000 VND [C1]." },
+  },
+  {
+    doc: "C3",
+    vi: "Shop cho đổi size trong mấy ngày?",
+    en: "How long do I have to exchange a size?",
+    guess: {
+      vi: "Nhiều shop cho đổi trong 7–30 ngày, bạn nên hỏi lại shop.",
+      en: "Many shops allow 7–30 days; you should check with the shop.",
+    },
+    read: {
+      vi: "Shop nhận đổi size trong 7 ngày, sản phẩm phải còn tem [C3].",
+      en: "Size exchanges are accepted within 7 days, with tags still on [C3].",
+    },
+  },
+  {
+    doc: null,
+    vi: "Viết lời chào cho khách mới",
+    en: "Write a greeting for a new customer",
+    guess: {
+      vi: "Chào bạn! Cảm ơn bạn đã ghé little closet, chúc bạn tìm được món ưng ý 💜",
+      en: "Hi! Thanks for visiting little closet, hope you find something you love 💜",
+    },
+    read: {
+      vi: "Chào bạn! Cảm ơn bạn đã ghé little closet, chúc bạn tìm được món ưng ý 💜",
+      en: "Hi! Thanks for visiting little closet, hope you find something you love 💜",
+    },
+  },
+];
+function MemoryDesk() {
+  const { t, lang } = useT();
+  const [qi, setQi] = useState(0),
+    [rag, setRag] = useState(false);
+  const q = memQuestions[qi];
+  const onDesk = rag && q.doc ? memDocs.find((d) => d.id === q.doc)! : null;
+  const answer = onDesk ? q.read : q.guess;
+  const status = !q.doc
+    ? t(
+        "✓ Không cần tài liệu: kỹ năng viết nằm sẵn trong trọng số.",
+        "✓ No documents needed: writing skill already lives in the weights.",
+      )
+    : onDesk
+      ? t("✓ Trả lời từ tài liệu trên bàn.", "✓ Answered from the document on the desk.")
+      : t(
+          "⚠️ Đoán từ trí nhớ: có thể sai hoặc đã cũ.",
+          "⚠️ Guessed from memory: may be wrong or outdated.",
+        );
+  return (
+    <>
+      <Top
+        title={t("Thư viện · bàn · bộ não", "Library · desk · brain")}
+        tag={t("CÂU TRẢ LỜI MINH HỌA", "SCRIPTED ANSWERS")}
+      />
+      <div className="chips">
+        {memQuestions.map((x, i) => (
+          <button key={x.vi} className={qi === i ? "selected" : ""} onClick={() => setQi(i)}>
+            {x[lang]}
+          </button>
+        ))}
+      </div>
+      <label className="toggle-label">
+        {t("App tra cứu tài liệu (RAG)", "The app looks up documents (RAG)")}
+        <Switch checked={rag} onCheckedChange={setRag} />
+      </label>
+      <div className="mem-grid">
+        <section className="mem-box library">
+          <b>📚 {t("Thư viện · vector DB", "Library · vector DB")}</b>
+          <small>{t("ngoài model", "outside the model")}</small>
+          <ul>
+            {memDocs.map((d) => (
+              <li key={d.id} className={onDesk?.id === d.id ? "taken" : ""}>
+                <code>{d.id}</code> {d[lang]}
+              </li>
+            ))}
+          </ul>
+        </section>
+        <span className="mem-arrow" aria-hidden="true">
+          {onDesk ? t("app chép chữ →", "app copies text →") : "·"}
+        </span>
+        <section className="mem-box desk">
+          <b>📋 {t("Trên bàn · context", "On the desk · context")}</b>
+          <small>{t("model đọc lần này", "read this time")}</small>
+          <p className="mem-q">“{q[lang]}”</p>
+          {onDesk && (
+            <p className="mem-doc">
+              <code>{onDesk.id}</code> {onDesk[lang]}
+            </p>
+          )}
+        </section>
+        <span className="mem-arrow" aria-hidden="true">
+          {t("model đọc →", "model reads →")}
+        </span>
+        <section className="mem-box brain">
+          <b>🧠 {t("Trong đầu · trọng số", "In its head · weights")}</b>
+          <small>{t("học từ trước, đóng băng", "learned earlier, frozen")}</small>
+          <ul>
+            {t(
+              ["tiếng Việt, tiếng Anh", "viết văn, viết code", "kiến thức chung về quần áo"],
+              ["Vietnamese, English", "writing prose and code", "general knowledge about clothes"],
+            ).map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+            <li className="missing">{t("✗ catalog và giá của shop", "✗ the shop's catalog and prices")}</li>
+          </ul>
+        </section>
+      </div>
+      <div className={"mem-answer" + (!q.doc || onDesk ? " ok" : " warn")} aria-live="polite">
+        <p>{answer[lang]}</p>
+        <small>{status}</small>
+      </div>
+      <p className="fineprint">
+        {t(
+          "Câu trả lời theo kịch bản, không gọi LLM. Vector DB không bao giờ vào trong đầu model: app chỉ chép chữ của tài liệu lên bàn.",
+          "Scripted answers, no LLM call. The vector DB never enters the model's head: the app only copies the documents' text onto the desk.",
+        )}
+      </p>
+    </>
+  );
+}
+// Published parameter counts (see each model's paper). MoE models also
+// list the parameters active per token.
+const paramModels = [
+  { name: "GPT-2", org: "OpenAI", year: 2019, n: 1.5e9, src: "gpt2" },
+  { name: "Mistral 7B", org: "Mistral AI", year: 2023, n: 7e9, src: "mistral" },
+  { name: "Llama 3.1 8B", org: "Meta", year: 2024, n: 8e9, src: "llama3" },
+  { name: "Gemma 2 27B", org: "Google", year: 2024, n: 27e9, src: "gemma2" },
+  { name: "Mixtral 8x7B", org: "Mistral AI", year: 2023, n: 47e9, active: 13e9, src: "mixtral" },
+  { name: "Llama 3.1 70B", org: "Meta", year: 2024, n: 70e9, src: "llama3" },
+  { name: "GPT-3", org: "OpenAI", year: 2020, n: 175e9, src: "gpt3" },
+  { name: "Llama 3.1 405B", org: "Meta", year: 2024, n: 405e9, src: "llama3" },
+  { name: "DeepSeek-V3", org: "DeepSeek", year: 2024, n: 671e9, active: 37e9, src: "deepseekv3" },
+];
+// Log scale from 1B to 1T parameters.
+const logX = (n: number) => (Math.log10(n) - 9) / 3;
+function ParamScale() {
+  const { t, num } = useT();
+  const [sel, setSel] = useState(2);
+  const m = paramModels[sel];
+  const billions = (n: number) => {
+    const b = n / 1e9;
+    return Number.isInteger(b) ? String(b) : num(b, 1);
+  };
+  // Rough memory: 2 bytes per parameter at 16-bit, ~0.55 at 4-bit.
+  const gb16 = (m.n * 2) / 1e9,
+    gb4 = (m.n * 0.55) / 1e9;
+  const runsOn =
+    gb4 <= 10
+      ? t("laptop / PC (16 GB RAM)", "a laptop / PC (16 GB RAM)")
+      : gb4 <= 48
+        ? t("1–2 GPU lớn", "1–2 large GPUs")
+        : t("cụm nhiều GPU máy chủ", "a cluster of server GPUs");
+  return (
+    <>
+      <Top
+        title={t("Các model lớn cỡ nào?", "How big are these models?")}
+        tag={t("SỐ ĐÃ CÔNG BỐ", "PUBLISHED NUMBERS")}
+      />
+      <div className="param-toy">
+        <span>{t("Model ở slide Training", "The model on the Training slide")}</span>
+        <b>{t("1 tham số (w)", "1 parameter (w)")}</b>
+        <span>→</span>
+        <span>Llama 3.1 8B</span>
+        <b>{t("8.000.000.000", "8,000,000,000")}</b>
+      </div>
+      <div className="param-chart" role="list">
+        <div className="param-axis" aria-hidden="true">
+          {[1e9, 1e10, 1e11, 1e12].map((n) => (
+            <span key={n} style={{ left: `${logX(n) * 100}%` }}>
+              {n >= 1e12 ? "1T" : `${n / 1e9}B`}
+            </span>
+          ))}
+        </div>
+        {paramModels.map((x, i) => (
+          <button
+            key={x.name}
+            role="listitem"
+            className={"param-row" + (sel === i ? " selected" : "")}
+            onMouseEnter={() => setSel(i)}
+            onFocus={() => setSel(i)}
+            onClick={() => setSel(i)}
+          >
+            <span className="param-name">
+              {x.name} <small>{x.year}</small>
+            </span>
+            <span className="param-track">
+              <i style={{ width: `${logX(x.n) * 100}%` }} />
+              {x.active && (
+                <em
+                  style={{ left: `${logX(x.active) * 100}%` }}
+                  title={t("tham số hoạt động", "active parameters")}
+                />
+              )}
+              <b style={{ left: `${logX(x.n) * 100}%` }}>{billions(x.n)}B</b>
+            </span>
+          </button>
+        ))}
+        <div className="param-row closed">
+          <span className="param-name">GPT-4o · Claude · Gemini</span>
+          <span className="param-track">
+            <small>{t("không công bố số tham số", "parameter counts not published")}</small>
+          </span>
+        </div>
+        <p className="param-legend">
+          <em /> {t("tham số hoạt động mỗi token (MoE)", "parameters active per token (MoE)")} ·{" "}
+          {t("thang log: mỗi vạch gấp 10 lần", "log scale: each gridline is 10×")}
+        </p>
+      </div>
+      <div className="param-detail" aria-live="polite">
+        <b>
+          {m.name} · {m.org} · {m.year}
+        </b>
+        <ul>
+          <li>
+            {t(`${billions(m.n)} tỷ tham số`, `${billions(m.n)} billion parameters`)}
+            {m.active &&
+              t(
+                ` (mỗi token chỉ dùng ${billions(m.active)} tỷ)`,
+                ` (each token uses only ${billions(m.active)} billion)`,
+              )}
+          </li>
+          <li>
+            {t("Dung lượng ≈", "Size ≈")} {num(gb16, gb16 < 10 ? 1 : 0)} GB (16-bit) ·{" "}
+            {num(gb4, gb4 < 10 ? 1 : 0)} GB (4-bit)
+          </li>
+          <li>
+            {t("Chạy thử được trên:", "Can run on:")} {runsOn}
+          </li>
+        </ul>
+        <small>
+          {t(
+            "Ước lượng thô, chưa tính bộ nhớ cho context (KV cache).",
+            "Rough estimate, not counting memory for the context (KV cache).",
+          )}
+        </small>
+      </div>
+    </>
+  );
+}
+// Inside the LLM: token vectors refined layer by layer (illustrative values).
+const insideTokens: Record<Lang, string[]> = {
+  vi: ["Mình", " thích", " lập"],
+  en: ["I", " like", " to"],
+};
+// What the last token's vector "points to" if we stopped at layers 0/8/16/24/32.
+const insideLens: Record<Lang, [string, number][][]> = {
+  vi: [
+    [["lập", 0.21], [",", 0.12], ["và", 0.09]],
+    [["lại", 0.24], ["đi", 0.15], ["trình", 0.11]],
+    [["trình", 0.46], ["lại", 0.12], ["kế", 0.1]],
+    [["trình", 0.78], ["kế", 0.07], ["lịch", 0.05]],
+    [["trình", 0.92], ["kế", 0.03], ["lịch", 0.02]],
+  ],
+  en: [
+    [["to", 0.18], ["the", 0.11], ["and", 0.08]],
+    [["be", 0.2], ["go", 0.14], ["do", 0.1]],
+    [["code", 0.24], ["play", 0.17], ["go", 0.12]],
+    [["code", 0.35], ["read", 0.2], ["play", 0.14]],
+    [["code", 0.41], ["read", 0.18], ["travel", 0.12]],
+  ],
+};
+// Llama 3.1 8B parameter split, in billions (computed from its config).
+const insideParts = [
+  { key: "emb", vi: "② Embedding", en: "② Embedding", b: 0.525 },
+  { key: "layers", vi: "③ 32 lớp", en: "③ 32 layers", b: 6.98 },
+  { key: "head", vi: "④ Logits", en: "④ Logits", b: 0.525 },
+];
+function InsideLLM() {
+  const { t, lang, num } = useT();
+  const [layer, setLayer] = useState(0),
+    [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    if (!playing) return;
+    const timer = setTimeout(() => {
+      if (layer >= 32) setPlaying(false);
+      else setLayer(layer + 1);
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [playing, layer]);
+  const tokens = insideTokens[lang];
+  const lens = insideLens[lang][Math.min(4, Math.floor(layer / 8))];
+  const part = layer === 0 ? "emb" : layer === 32 ? "head" : "layers";
+  const total = insideParts.reduce((n, x) => n + x.b, 0);
+  // Later tokens absorb more of the earlier ones as the layers go on.
+  const mix = layer / 32;
+  return (
+    <>
+      <Top
+        title={t("Vector đi xuyên các lớp", "Vectors through the layers")}
+        tag={t("GIÁ TRỊ MINH HỌA", "ILLUSTRATIVE VALUES")}
+      />
+      <div className="inside-stage">
+        {tokens.map((tk, ti) => (
+          <div key={ti} className={"inside-col" + (ti === tokens.length - 1 ? " last" : "")}>
+            <code>{tk.replace(/ /g, "·")}</code>
+            <div className="inside-vec">
+              {Array.from({ length: 12 }, (_, r) => {
+                // Blend this token's own pattern with the previous tokens' as layers deepen.
+                const own = heat(r, ti * 3, 0.3 * layer);
+                const ctx = ti > 0 ? heat(r, (ti - 1) * 3 + 1, 0.3 * layer + 2) : own;
+                const v = own * (1 - mix * 0.6) + ctx * mix * 0.6;
+                return (
+                  <span
+                    key={r}
+                    style={{ background: `rgba(79, 143, 214, ${0.12 + v * 0.8})` }}
+                  />
+                );
+              })}
+              <small>… 4096</small>
+            </div>
+            {ti < tokens.length - 1 && layer > 0 && (
+              <span
+                className="inside-attn"
+                style={{ opacity: 0.25 + mix * 0.75 }}
+                aria-hidden="true"
+              >
+                ⟶
+              </span>
+            )}
+          </div>
+        ))}
+        <div className="inside-out">
+          <small>
+            {layer === 32
+              ? t("④ Logits → 128.256 điểm → xác suất", "④ Logits → 128,256 scores → probabilities")
+              : t(`Nếu dừng ở lớp ${layer}, model đang nghiêng về:`, `If we stopped at layer ${layer}, it leans toward:`)}
+          </small>
+          {lens.map(([w, pr], i) => (
+            <div key={w + i} className={"inside-guess" + (i === 0 ? " top" : "")}>
+              <code>{w}</code>
+              <i style={{ width: `${pr * 100}%` }} />
+              <b>{Math.round(pr * 100)}%</b>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="inside-controls">
+        <Range
+          label={t("Lớp", "Layer")}
+          value={layer}
+          min={0}
+          max={32}
+          onChange={(n) => {
+            setPlaying(false);
+            setLayer(n);
+          }}
+        />
+        <button
+          className="small-button"
+          onClick={() => {
+            if (layer >= 32) setLayer(0);
+            setPlaying(!playing);
+          }}
+        >
+          <Play size={16} />
+          {playing ? t("Tạm dừng", "Pause") : t("Chạy qua 32 lớp", "Run through 32 layers")}
+        </button>
+      </div>
+      <div className="inside-params" aria-label={t("Tham số nằm ở đâu", "Where the parameters live")}>
+        {insideParts.map((x) => (
+          <div
+            key={x.key}
+            className={"inside-seg" + (part === x.key ? " on" : "")}
+            style={{ flexGrow: x.b }}
+          >
+            <b>{x[lang]}</b>
+            <small>
+              {num(x.b, 2)} {t("tỷ", "B")} · {Math.round((x.b / total) * 100)}%
+            </small>
+          </div>
+        ))}
+      </div>
+      <Hint>
+        {layer === 0
+          ? t(
+              "Lớp 0: mỗi token vừa được tra bảng embedding, chưa biết gì về các token xung quanh.",
+              "Layer 0: each token was just looked up in the embedding table and knows nothing about its neighbors yet.",
+            )
+          : layer < 32
+            ? t(
+                `Lớp ${layer}/32: mỗi lớp trộn thêm ngữ cảnh từ các token phía trước; vector của “${tokens[tokens.length - 1].trim()}” dần “hiểu” cả câu.`,
+                `Layer ${layer}/32: each layer mixes in context from earlier tokens; the vector for “${tokens[tokens.length - 1].trim()}” gradually “understands” the whole sentence.`,
+              )
+            : t(
+                `Sau 32 lớp, vector của token cuối được đổi thành xác suất cho chữ tiếp theo: “${lens[0][0]}”.`,
+                `After 32 layers, the last token's vector becomes probabilities for the next word: “${lens[0][0]}”.`,
+              )}
+      </Hint>
+      <p className="fineprint">
+        {t(
+          "Số tham số tính từ cấu hình Llama 3.1 8B. Màu vector và các từ đoán ở từng lớp là minh họa.",
+          "Parameter counts are computed from the Llama 3.1 8B config. Vector colors and per-layer guesses are illustrative.",
+        )}
+      </p>
+    </>
+  );
+}
+// Glossary of LLM keywords. `demo` points to the lesson that covers each one.
+type GlossTerm = { key: string; term: string; demo: number; vi: { what: string; ex: string }; en: { what: string; ex: string } };
+const glossTerms: GlossTerm[] = [
+  { key: "token", term: "Token", demo: 13,
+    vi: { what: "Mảnh chữ mà model đọc và viết. Một từ có thể là 1 hoặc vài token.", ex: "“Viết” → “Vi” + “ết”" },
+    en: { what: "A piece of text the model reads and writes. A word can be one token or several.", ex: "“unbelievable” → “un” + “believ” + “able”" } },
+  { key: "tokenizer", term: "Tokenizer", demo: 13,
+    vi: { what: "Bộ chia văn bản thành token (và đổi thành số ID) trước khi đưa vào model.", ex: "“Mình thích lập trình” → [41, 205, 78, 912]" },
+    en: { what: "Splits text into tokens (and turns them into ID numbers) before it reaches the model.", ex: "“I like to code” → [40, 1093, 311, 2082]" } },
+  { key: "prompt", term: "Prompt", demo: 28,
+    vi: { what: "Nội dung và chỉ dẫn được gửi cho model trong một lượt.", ex: "“Viết React component nút Like có đếm số lượt bấm”" },
+    en: { what: "The content and instructions sent to the model in one turn.", ex: "“Write a React Like button that counts clicks”" } },
+  { key: "system", term: "System prompt", demo: 31,
+    vi: { what: "Chỉ dẫn cấp cao do app cung cấp để định hướng cách model trả lời. Người dùng thường không thấy.", ex: "“Bạn là trợ lý code của dự án X. Trả lời ngắn gọn, dùng TypeScript.”" },
+    en: { what: "High-level instructions from the app that steer how the model answers. Users usually don't see it.", ex: "“You are the coding assistant for project X. Be brief, use TypeScript.”" } },
+  { key: "context", term: "Context window", demo: 30,
+    vi: { what: "Tổng số token model đọc được trong một lần gọi: system prompt, lịch sử chat, tài liệu, câu hỏi (và câu trả lời). Vượt quá thì app phải cắt bớt.", ex: "1M token ≈ 555 nghìn từ tiếng Anh (theo tài liệu Claude)" },
+    en: { what: "How many tokens the model can take in one call: system prompt, chat history, documents, question (and the answer). Beyond it, the app must trim.", ex: "1M tokens ≈ 555k English words (per Claude's docs)" } },
+  { key: "io", term: "Input / output tokens", demo: 28,
+    vi: { what: "Token model đọc vào / tạo ra. Thường được tính tiền riêng; token output đắt hơn.", ex: "Hỏi 50 token, trả lời 300 token → tính tiền cả hai" },
+    en: { what: "Tokens the model reads / writes. Usually billed separately; output tokens cost more.", ex: "Ask with 50 tokens, get 300 back → both are billed" } },
+  { key: "inference", term: "Inference", demo: 12,
+    vi: { what: "Quá trình model chạy để tạo câu trả lời từ input, dùng trọng số đã học (không học thêm).", ex: "Mỗi lần bạn bấm Gửi = 1 lần inference" },
+    en: { what: "The model running to produce an answer from input, using its learned weights (no learning happens).", ex: "Every time you hit Send = one inference" } },
+  { key: "params", term: "Parameters / weights", demo: 32,
+    vi: { what: "Các con số model học được trong lúc train; chúng quyết định cách model xử lý input.", ex: "Llama 3.1 8B = 8 tỷ tham số" },
+    en: { what: "The numbers a model learns during training; they decide how it processes input.", ex: "Llama 3.1 8B = 8 billion parameters" } },
+  { key: "temperature", term: "Temperature", demo: 16,
+    vi: { what: "Mức độ đa dạng khi chọn token tiếp theo. Thấp thường ổn định hơn; cao thường đa dạng hơn.", ex: "Viết code: thấp · Nghĩ slogan: cao hơn" },
+    en: { what: "How varied the next-token choice is. Low is usually steadier; high is usually more varied.", ex: "Writing code: low · Brainstorming slogans: higher" } },
+  { key: "embedding", term: "Embedding", demo: 6,
+    vi: { what: "Cách biểu diễn nội dung thành một vector số để so sánh ý nghĩa, tìm kiếm tài liệu liên quan.", ex: "“áo đi Đà Lạt” → [8; 8; 3]" },
+    en: { what: "Representing content as a vector of numbers to compare meaning and find related documents.", ex: "“top for a Da Lat trip” → [8, 8, 3]" } },
+  { key: "rag", term: "RAG", demo: 17,
+    vi: { what: "App tìm tài liệu liên quan rồi đưa vào context để model dựa vào đó trả lời.", ex: "Tìm “[C1] Hoodie 349k” → đặt lên bàn → trả lời có nguồn" },
+    en: { what: "The app finds relevant documents and puts them in the context so the model answers from them.", ex: "Find “[C1] Hoodie 349k” → put on the desk → answer with a source" } },
+  { key: "tool", term: "Tool / function calling", demo: 31,
+    vi: { what: "Model yêu cầu app gọi công cụ (tìm kiếm, chạy code, sửa file…), rồi đọc kết quả để trả lời tiếp.", ex: "search_products({ maxPrice: 400000 })" },
+    en: { what: "The model asks the app to call a tool (search, run code, edit files…), then reads the result to continue.", ex: "search_products({ maxPrice: 400000 })" } },
+  { key: "finetune", term: "Fine-tuning", demo: 12,
+    vi: { what: "Huấn luyện thêm một model để nó quen với kiểu dữ liệu hoặc nhiệm vụ cụ thể. Thay đổi trọng số, khác với RAG.", ex: "Train thêm trên vài nghìn câu trả lời mẫu của shop" },
+    en: { what: "Training a model further so it gets used to a data style or task. Changes weights, unlike RAG.", ex: "Extra training on a few thousand of the shop's sample replies" } },
+  { key: "hallucination", term: "Hallucination", demo: 30,
+    vi: { what: "Model tự tin nói điều sai hoặc bịa ra, thường khi thiếu thông tin trên “bàn”.", ex: "Bịa giá hoodie “399k” khi không có tài liệu" },
+    en: { what: "The model confidently states something wrong or made up, often when the “desk” lacks information.", ex: "Inventing a “399k” hoodie price with no document" } },
+];
+// Context windows from each provider's official docs (checked 09/2026).
+const ctxModels = [
+  { name: "Claude Haiku 4.5", ctx: 200e3, out: "64K", src: "claudeModels" },
+  { name: "Claude Opus 5.5", ctx: 1e6, out: "128K", src: "claudeModels" },
+  { name: "Gemini 3.1 Pro", ctx: 1e6, out: "64K", src: "gemini3" },
+  { name: "GPT-6 Sol", ctx: 1.05e6, out: "128K", src: "openaiModels" },
+];
+function Glossary() {
+  const { t, lang } = useT();
+  const [sel, setSel] = useState("context");
+  const slides = getSlides(lang);
+  const term = glossTerms.find((g) => g.key === sel)!;
+  const n = slides.findIndex((x) => x.demo === term.demo) + 1;
+  const max = Math.max(...ctxModels.map((m) => m.ctx));
+  return (
+    <>
+      <Top title={t("Từ điển LLM", "LLM dictionary")} tag={t("BẤM TỪNG TỪ", "CLICK A WORD")} />
+      <div className="gloss-terms">
+        {glossTerms.map((g) => (
+          <button
+            key={g.key}
+            className={sel === g.key ? "selected" : ""}
+            aria-pressed={sel === g.key}
+            onClick={() => setSel(g.key)}
+          >
+            {g.term}
+          </button>
+        ))}
+      </div>
+      <div className="gloss-card" aria-live="polite">
+        <b>{term.term}</b>
+        <p>{term[lang].what}</p>
+        <p className="gloss-ex">
+          <small>{t("Ví dụ", "Example")}</small> {term[lang].ex}
+        </p>
+        {sel === "context" && (
+          <div className="ctx-chart">
+            {ctxModels.map((m) => (
+              <div key={m.name} className="ctx-row">
+                <span>{m.name}</span>
+                <div>
+                  <i style={{ width: `${(m.ctx / max) * 100}%` }} />
+                </div>
+                <b>{m.ctx >= 1e6 ? `${m.ctx / 1e6}M` : `${m.ctx / 1e3}K`}</b>
+                <small>out {m.out}</small>
+              </div>
+            ))}
+            <p>
+              {t(
+                "Các model hàng đầu hiện đều khoảng 1M token. Khác nhau ở output tối đa, giá, và cách mỗi tokenizer đếm token. Số liệu kiểm tra 09/2026 từ tài liệu chính thức; thay đổi theo từng đời model.",
+                "Today's top models are all around 1M tokens. They differ in max output, price, and how each tokenizer counts tokens. Checked 09/2026 against official docs; changes with every model generation.",
+              )}
+            </p>
+          </div>
+        )}
+        {n > 0 && (
+          <a className="gloss-link" href={`#slide-${n}`}>
+            {t("Xem kỹ ở slide", "Covered on slide")} {n} →
+          </a>
+        )}
+      </div>
+    </>
+  );
+}
 type Lane = { title: string; steps: string[]; details: string[] };
 const pipelines: Record<number, Record<Lang, Lane[]>> = {
   10: {
@@ -3353,7 +4068,136 @@ function Pipeline({ index }: { index: number }) {
     </>
   );
 }
+// Next-word training on 4 candidate scores (logits). The update is the real
+// softmax cross-entropy gradient; a real LLM applies it to billions of weights.
+const trainSamples: Record<Lang, { ctx: string; options: string[] }[]> = {
+  vi: [
+    { ctx: "Mình thích lập", options: ["trình", "kế", "lịch", "đi"] },
+    { ctx: "Hà Nội là thủ đô của Việt", options: ["Nam", "Hà", "Tây", "là"] },
+    { ctx: "const [likes, setLikes] = use", options: ["State", "Effect", "Ref", "Memo"] },
+  ],
+  en: [
+    { ctx: "I love writing", options: ["code", "songs", "books", "it"] },
+    { ctx: "The capital of France is", options: ["Paris", "London", "Rome", "a"] },
+    { ctx: "const [likes, setLikes] = use", options: ["State", "Effect", "Ref", "Memo"] },
+  ],
+};
+// Untrained: the right answer (index 0) is not the model's first guess.
+const TRAIN_START = [0.1, 0.3, 0.2, 0.4];
+const TRAIN_RATE = 1.5;
+const softmax = (l: number[]) => {
+  const e = l.map((x) => Math.exp(x));
+  const sum = e.reduce((a, b) => a + b, 0);
+  return e.map((x) => x / sum);
+};
 function Training() {
+  const [mode, setMode] = useState(0);
+  const { t } = useT();
+  const tabs = (
+    <div className="chips">
+      {t(
+        ["Ví dụ thật: đoán chữ tiếp theo", "Bên trong: 1 núm vặn w"],
+        ["Real example: guess the next word", "Inside: one knob w"],
+      ).map((label, i) => (
+        <button key={label} className={mode === i ? "selected" : ""} onClick={() => setMode(i)}>
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+  return mode === 0 ? <NextWordTraining tabs={tabs} /> : <KnobTraining tabs={tabs} />;
+}
+function NextWordTraining({ tabs }: { tabs: React.ReactNode }) {
+  const { t, lang, num } = useT();
+  const [si, setSi] = useState(0),
+    [logits, setLogits] = useState(TRAIN_START),
+    [steps, setSteps] = useState(0);
+  const sample = trainSamples[lang][si];
+  const probs = softmax(logits);
+  const loss = -Math.log(probs[0]);
+  const startLoss = -Math.log(softmax(TRAIN_START)[0]);
+  const reset = () => {
+    setLogits(TRAIN_START);
+    setSteps(0);
+  };
+  const learn = () => {
+    // d(loss)/d(logit_i) = p_i − [i is the answer]; step against it.
+    setLogits(logits.map((l, i) => l + TRAIN_RATE * ((i === 0 ? 1 : 0) - probs[i])));
+    setSteps(steps + 1);
+  };
+  const pct = (x: number) => `${num(x * 100, 0)}%`;
+  return (
+    <>
+      <Top
+        title={t("Học bằng cách đoán chữ tiếp theo", "Learning by guessing the next word")}
+        tag={t("GRADIENT TÍNH THẬT", "REAL GRADIENT")}
+      />
+      {tabs}
+      <div className="chips">
+        {trainSamples[lang].map((x, i) => (
+          <button
+            key={x.ctx}
+            className={si === i ? "selected" : ""}
+            onClick={() => {
+              setSi(i);
+              reset();
+            }}
+          >
+            {x.ctx} …
+          </button>
+        ))}
+      </div>
+      <p className="train-sentence">
+        {t("Câu trong dữ liệu train:", "Sentence in the training data:")} <b>{sample.ctx}</b>{" "}
+        <span className="blank">___</span>
+        <small>
+          {t("đáp án bị che:", "hidden answer:")} <code>{sample.options[0]}</code>
+        </small>
+      </p>
+      <div className="train-probs">
+        {sample.options.map((o, i) => (
+          <div key={o} className={"prob-row" + (i === 0 ? " answer" : "")}>
+            <span>{o}</span>
+            <div>
+              <i style={{ width: `${probs[i] * 100}%` }} />
+            </div>
+            <strong>{pct(probs[i])}</strong>
+          </div>
+        ))}
+      </div>
+      <div className="action-row">
+        <button className="small-button" onClick={learn}>
+          <Play size={16} />
+          {t("Học một bước", "Learn one step")}
+        </button>
+        <button className="quiet" aria-label={t("Bắt đầu lại", "Start over")} onClick={reset}>
+          <RotateCcw size={16} />
+        </button>
+        <span>
+          {t("Bước", "Step")} {steps} · loss {num(loss, 2)}
+        </span>
+      </div>
+      <Hint>
+        {steps === 0
+          ? t(
+              `Chưa học: model đoán gần như ngẫu nhiên, “${sample.options[0]}” chỉ có ${pct(probs[0])}.`,
+              `Untrained: the model guesses almost at random; “${sample.options[0]}” has only ${pct(probs[0])}.`,
+            )
+          : t(
+              `Sau ${steps} bước: “${sample.options[0]}” tăng lên ${pct(probs[0])}, loss giảm từ ${num(startLoss, 2)} xuống ${num(loss, 2)}. Model không chép lại câu, mà chỉnh trọng số để lần sau đoán đúng hơn.`,
+              `After ${steps} steps: “${sample.options[0]}” rose to ${pct(probs[0])}, loss fell from ${num(startLoss, 2)} to ${num(loss, 2)}. The model doesn't copy the sentence; it adjusts weights to guess better next time.`,
+            )}
+      </Hint>
+      <p className="fineprint">
+        {t(
+          "Thật ra LLM làm việc này cùng lúc trên hàng nghìn tỷ token, chỉnh hàng tỷ trọng số. Demo chỉnh thẳng 4 điểm số để dễ nhìn.",
+          "A real LLM does this over trillions of tokens, adjusting billions of weights. The demo nudges 4 scores directly so it's easy to see.",
+        )}
+      </p>
+    </>
+  );
+}
+function KnobTraining({ tabs }: { tabs: React.ReactNode }) {
   const [w, setW] = useState(1);
   const [n, setN] = useState(0);
   const loss = (8 - w) ** 2;
@@ -3364,6 +4208,7 @@ function Training() {
         title={t("Model nhỏ xíu: y = w × x", "A tiny model: y = w × x")}
         tag={t("x = 1 · y MỤC TIÊU = 8", "x = 1 · TARGET y = 8")}
       />
+      {tabs}
       <div className="training-stats">
         <div>
           <small>{t("Trọng số w", "Weight w")}</small>
@@ -4511,6 +5356,18 @@ export function Demo({ index }: { index: number }) {
       return <DataTimeline />;
     case 28:
       return <PromptToCode />;
+    case 29:
+      return <BigPicture />;
+    case 30:
+      return <MemoryDesk />;
+    case 31:
+      return <PromptToCode full />;
+    case 32:
+      return <ParamScale />;
+    case 33:
+      return <InsideLLM />;
+    case 34:
+      return <Glossary />;
     default:
       return null;
   }

@@ -1,11 +1,11 @@
 import type { Lang } from "./i18n";
 import { chaptersEn, dividersEn, lessonsEn } from "./content-en";
 const chaptersVi = [
-  "Trước khi có AI",
-  "Sau khi có AI",
-  "Model & LLM",
-  "RAG",
-  "Generative AI",
+  "Bức tranh tổng",
+  "LLM: bộ não",
+  "Search: tìm tài liệu",
+  "RAG: đặt lên bàn",
+  "Ghép lại",
 ];
 const lessons = [
   {
@@ -170,8 +170,8 @@ const lessons = [
     k: "11 / GIẢI MÃ CHIẾC HỘP",
     t: "Model là",
     accent: "một hàm đã học.",
-    p: "Đưa dữ liệu vào, nhận kết quả ra. Kiến trúc quy định cách tính; các trọng số quyết định model đã học được gì.",
-    take: "Code + kiến trúc + trọng số + quy tắc xử lý đầu vào → hành vi của model.",
+    p: "LLM giống tính năng gợi ý chữ trên bàn phím điện thoại, nhưng lớn hơn rất nhiều: nhìn đoạn chữ đang có rồi đoán chữ tiếp theo. Những gì nó biết nằm trong hàng tỷ con số gọi là trọng số, học từ rất nhiều văn bản.",
+    take: "Model = kiến trúc (cách tính) + trọng số (những gì đã học).",
     dev: [
       "Model = kiến trúc (cách tính) + trọng số (các số đã học), thường lưu thành tensor trong checkpoint.",
       "Cùng khái niệm “model” cho phân loại, embedding, sinh văn bản hay ảnh; khác nhau ở input/output.",
@@ -184,10 +184,11 @@ const lessons = [
     k: "12 / “HỌC” CÓ NGHĨA LÀ GÌ?",
     t: "Dự đoán. Đo sai.",
     accent: "Điều chỉnh.",
-    p: "Training lặp lại: dự đoán → tính loss → cập nhật trọng số để giảm lỗi. Inference dùng trọng số đã học để chạy.",
-    take: "Gõ một prompt bình thường không đồng nghĩa model được huấn luyện lại.",
+    p: "Cách LLM học: lấy một câu có sẵn, che chữ tiếp theo, bắt model đoán. Đoán sai thì chỉnh trọng số một chút để lần sau đoán đúng hơn. Lặp lại trên hàng nghìn tỷ chữ. Khi dùng (inference), model chỉ chạy với trọng số đã học.",
+    take: "Train xong, trọng số đóng băng: gõ prompt không dạy model điều gì mới.",
     dev: [
-      "Demo: `y = w·x` với x = 1, mục tiêu 8, `loss = (y − 8)²`. Mỗi bước: `w ← w − η·∂loss/∂w` với η = 0,1.",
+      "Tab “đoán chữ tiếp theo”: `loss = −ln p(đáp án)` (cross-entropy). Mỗi bước cộng `η·(1 − p)` vào điểm của đáp án và trừ `η·p` ở các lựa chọn khác: đúng gradient của softmax, nhưng áp thẳng lên 4 điểm số thay vì hàng tỷ trọng số.",
+      "Tab “1 núm vặn”: `y = w·x` với x = 1, mục tiêu 8, `loss = (y − 8)²`. Mỗi bước: `w ← w − η·∂loss/∂w` với η = 0,1.",
       "LLM dùng cùng ý tưởng nhưng với hàng tỷ tham số; gradient được tính bằng backpropagation.",
       "Gõ prompt là inference: trọng số không đổi. Fine-tuning mới cập nhật trọng số; RAG chỉ thay đổi context.",
     ],
@@ -257,8 +258,8 @@ const lessons = [
     k: "17 / KHI MODEL CHƯA BIẾT SHOP CỦA BẠN",
     t: "Cho AI đọc",
     accent: "đúng tài liệu.",
-    p: "RAG = Retrieval-Augmented Generation. Tìm tài liệu liên quan, đưa vào context, rồi yêu cầu model trả lời dựa trên đó.",
-    take: "RAG là cách tổ chức hệ thống, không phải một model mới.",
+    p: "RAG = Retrieval-Augmented Generation: tìm tài liệu liên quan, đặt lên “bàn” (context), rồi để model đọc và trả lời dựa trên đó.",
+    take: "RAG không dạy model điều gì mới: nó chỉ đặt tài liệu lên bàn cho lần hỏi này.",
     dev: [
       "Trọng số LLM cố định sau khi train; RAG đưa dữ liệu mới vào context lúc hỏi.",
       "Retrieval có thể là keyword, vector, hybrid, SQL hay API; không bắt buộc có vector DB.",
@@ -385,9 +386,9 @@ const lessons = [
   {
     c: 1,
     k: "11 / MODEL HỌC CÁCH XẾP CHỖ",
-    t: "Model học cách",
+    t: "Embedding model học cách",
     accent: "xếp chỗ thế nào?",
-    p: "Ngày xưa, con người phải tự chấm điểm từng món theo từng tiêu chí. Ngày nay, model tự học từ rất nhiều cặp câu: cặp nào cùng ý thì kéo lại gần, khác ý thì đẩy ra xa. Lặp đi lặp lại, bản đồ tự thành hình.",
+    p: "Ngày xưa, con người phải tự chấm điểm từng món theo từng tiêu chí. Ngày nay, embedding model tự học từ rất nhiều cặp câu: cặp nào cùng ý thì kéo lại gần, khác ý thì đẩy ra xa. Lặp đi lặp lại, bản đồ tự thành hình. (LLM cũng tự học, nhưng để đoán chữ tiếp theo, và kết quả nằm trong trọng số của nó.)",
     take: "“Tự học” nghĩa là không cần người chấm từng mẫu. Con người vẫn chọn dữ liệu cho model học.",
     dev: [
       "Hand-crafted features: người đặt ra các chiều như “độ ấm” rồi chấm điểm. Dễ hiểu nhưng không mở rộng được cho hàng triệu khái niệm.",
@@ -423,60 +424,219 @@ const lessons = [
     refs: ["tokenizer", "transformer", "generation"],
     full: true,
   },
+  // 29 · Opening: the big picture (app, search, desk/context, LLM).
+  {
+    c: 0,
+    k: "BỨC TRANH TỔNG",
+    t: "Phía sau",
+    accent: "một câu trả lời AI.",
+    p: "Khi bạn hỏi ChatGPT hay nhờ Copilot viết code, có 4 phần phối hợp với nhau: app nhận câu hỏi, search tìm tài liệu, “cái bàn” (context) chứa những gì model được đọc, và LLM là bộ não viết câu trả lời.",
+    take: "Giống một kỳ thi được mở sách: kiến thức trong đầu, thư viện bên ngoài, và vài trang giấy đặt trên bàn.",
+    dev: [
+      "LLM chỉ nhận chữ và trả về chữ; lịch sử chat, tìm tài liệu, hiển thị, ghi file đều do app làm.",
+      "Buổi này đi lần lượt: LLM → Search → RAG → ghép lại.",
+    ],
+    refs: ["rag", "transformer"],
+  },
+  // 30 · Bridge from LLM to Search: what the model remembers vs reads.
+  {
+    c: 1,
+    k: "MODEL NHỚ GÌ, ĐỌC GÌ",
+    t: "Model nhớ gì?",
+    accent: "Model đọc gì?",
+    p: "LLM học từ rất nhiều chữ, và những gì học được nằm trong trọng số, giống kiến thức trong đầu. Nhưng nó nhớ không chính xác, không biết chuyện mới, và không biết dữ liệu riêng của bạn. Muốn trả lời đúng, phải đặt đúng tài liệu lên “bàn” cho nó đọc.",
+    take: "Vector database không bao giờ vào trong đầu model. Chỉ chữ của tài liệu được đặt lên bàn.",
+    dev: [
+      "Trọng số: học lúc train, cố định lúc hỏi; muốn thay đổi phải fine-tune.",
+      "Context: mọi thứ gửi kèm mỗi lần hỏi (system prompt, lịch sử, tài liệu, câu hỏi); giới hạn bởi context window và tính tiền theo token.",
+      "Search / vector DB nằm ngoài model: app tìm rồi chép chữ của tài liệu vào context.",
+      "Có tài liệu trên bàn vẫn có thể sai: model có thể đọc nhầm hoặc thêm từ trí nhớ, nên cần yêu cầu bám nguồn và trích dẫn.",
+    ],
+    refs: ["rag"],
+  },
+  // 31 · Finale: the prompt-to-code stage with RAG and boundaries on.
+  {
+    c: 4,
+    k: "GHÉP LẠI TOÀN BỘ",
+    t: "Toàn bộ",
+    accent: "hệ thống.",
+    p: "",
+    take: "",
+    dev: [] as string[],
+    refs: ["rag", "vectorSearch", "generation"],
+    full: true,
+  },
+  // 32 · What parameters / weights are, and how big popular models are.
+  {
+    c: 1,
+    k: "THAM SỐ · TRỌNG SỐ",
+    t: "Tham số là",
+    accent: "những núm vặn đã học.",
+    p: "Nhớ model nhỏ ở slide trước: chỉ có 1 con số w, học dần tới 8. LLM giống hệt, nhưng có hàng tỷ con số như vậy. Người ta gọi chúng là tham số hay trọng số: “8B” nghĩa là 8 tỷ con số.",
+    take: "Nhiều tham số hơn thường biết nhiều hơn, nhưng cũng nặng hơn, chậm hơn và tốn tiền chạy hơn.",
+    dev: [
+      "Mỗi tham số thường lưu bằng 16 bit (2 byte): 8B tham số ≈ 16 GB. Quantization 4 bit giảm còn khoảng 4–5 GB, đánh đổi một ít chất lượng.",
+      "MoE (Mixture of Experts) như Mixtral hay DeepSeek-V3: tổng tham số rất lớn nhưng mỗi token chỉ dùng một phần (tham số “hoạt động”), nên tính toán rẻ hơn model dense cùng cỡ; bộ nhớ vẫn phải chứa đủ toàn bộ.",
+      "GPT-4o, Claude, Gemini không công bố số tham số. Số tham số cũng không phải thước đo chất lượng duy nhất: dữ liệu và cách train quan trọng không kém.",
+    ],
+    refs: ["llama3", "deepseekv3", "mixtral", "gpt3"],
+  },
+  // 33 · Inside the LLM: vectors flowing through the layers.
+  {
+    c: 1,
+    k: "BÊN TRONG LLM",
+    t: "Đi xuyên",
+    accent: "32 lớp.",
+    p: "Mỗi token vào model thành một vector 4096 số. Các vector đi qua 32 lớp giống nhau; mỗi lớp trộn thêm thông tin từ các token phía trước rồi cập nhật lại. Cuối cùng, vector của token cuối được dùng để đoán chữ tiếp theo.",
+    take: "Bên trong LLM không có chữ, chỉ có vector được sửa dần qua từng lớp.",
+    dev: [
+      "Mỗi lớp = attention (trộn thông tin giữa các token) + feed-forward (biến đổi từng vector). Kết quả được cộng vào vector cũ (residual), nên vector được “sửa dần” chứ không bị thay hẳn.",
+      "Llama 3.1 8B: bảng embedding 128.256 × 4096 ≈ 0,53 tỷ; mỗi lớp ≈ 0,22 tỷ (attention 42 triệu + feed-forward 176 triệu); 32 lớp ≈ 7 tỷ; phần tính logits ≈ 0,53 tỷ. Tổng ≈ 8,03 tỷ.",
+      "Phần “nếu dừng ở lớp này thì đoán gì” mô phỏng kỹ thuật logit lens; các từ và xác suất trong demo là minh họa.",
+    ],
+    refs: ["transformer", "llama3"],
+  },
+  // 34 · Glossary of LLM keywords (right after the opening slide).
+  {
+    c: 0,
+    k: "TỪ KHÓA HAY GẶP",
+    t: "Từ điển nhỏ",
+    accent: "khi làm việc với LLM.",
+    p: "Những từ bạn sẽ gặp trong tài liệu API, bảng giá và các buổi họp về AI. Bấm vào từng từ để xem giải thích, ví dụ, và slide nói kỹ về nó.",
+    take: "Không cần nhớ hết bây giờ: mỗi từ sẽ quay lại ở phần sau.",
+    dev: [
+      "Context window và output tối đa thay đổi theo từng đời model; kiểm tra trang models của nhà cung cấp (hoặc Models API) trước khi thiết kế.",
+      "Cùng một đoạn văn, mỗi tokenizer đếm ra số token khác nhau, nên “1M token” của hai hãng không chứa đúng cùng lượng chữ.",
+      "Context dài không có nghĩa là model đọc kỹ mọi chỗ: thông tin nằm giữa đoạn rất dài có thể bị bỏ sót, nên RAG và việc chọn đúng tài liệu vẫn quan trọng.",
+    ],
+    refs: ["claudeModels", "gemini3", "openaiModels"],
+  },
 ];
+export type StoryFocus = "llm" | "search" | "desk" | "all";
 export type Slide = (typeof lessons)[number] & {
   demo: number;
-  divider?: "before" | "after";
+  // "chapter": story-map divider; "before" / "after": search sub-sections.
+  divider?: "before" | "after" | "chapter";
+  // Divider id (for its English text) and the story-map block it highlights.
+  id?: string;
+  focus?: StoryFocus;
   full?: boolean;
 };
 const mapped: Slide[] = lessons.map((slide, demo) => ({ ...slide, demo }));
+const divider = (
+  id: string,
+  kind: "before" | "after" | "chapter",
+  text: { k: string; t: string; accent: string; p: string; take: string },
+  focus?: StoryFocus,
+): Slide => ({ c: 0, demo: -1, divider: kind, id, focus, dev: [], refs: [], ...text });
+// Chapters follow presentation order, whatever `c` the lesson data carries.
+const chapter = (c: number, items: Slide[]) => items.map((x) => ({ ...x, c }));
+// Story: big picture → LLM (the brain) → Search (what goes on the desk) →
+// RAG (putting it on the desk) → everything together. Lessons 5 (taste
+// vector), 7 (3D space) and 23 (journey) are no longer shown.
 const slidesVi: Slide[] = [
-  {
-    c: 0,
-    demo: -1,
-    divider: "before",
-    k: "TÌM KIẾM TRUYỀN THỐNG",
-    t: "Trước khi",
-    accent: "có AI",
-    p: "Bắt đầu với dữ liệu, điều kiện và những phép so sánh.",
-    take: "Linear Search → Metadata → Inverted index",
-    dev: [],
-    refs: [],
-  },
-  // Lesson 4 ("Đi Đà Lạt") closes the first part: the problem keyword search cannot solve.
-  ...mapped.slice(0, 5),
-  {
-    c: 1,
-    demo: -1,
-    divider: "after",
-    k: "KHI THÊM MODEL VÀO HỆ THỐNG",
-    t: "Sau khi",
-    accent: "có AI",
-    p: "Từ so khớp câu chữ đến biểu diễn và tìm kiếm theo ý nghĩa.",
-    take: "Embedding → Vector → Semantic search",
-    dev: [],
-    refs: [],
-  },
-  // Overview first, then the store, how points get there, how the model
-  // learns, where training data comes from. Lessons 5 (taste vector) and
-  // 7 (3D space) are no longer shown: the overview and store cover them.
-  mapped[25],
-  mapped[9],
-  mapped[6],
-  mapped[26],
-  mapped[27],
-  mapped[8],
-  mapped[10],
-  // "From prompt to code" overview opens the Model & LLM part.
-  mapped[28],
-  ...mapped.slice(11, 25),
+  ...chapter(0, [mapped[29], mapped[34]]),
+  ...chapter(1, [
+    divider(
+      "ch-llm",
+      "chapter",
+      {
+        k: "BỘ NÃO VIẾT CÂU TRẢ LỜI",
+        t: "LLM:",
+        accent: "bộ não.",
+        p: "Bộ não viết ra chữ như thế nào?",
+        take: "",
+      },
+      "llm",
+    ),
+    mapped[11],
+    mapped[12],
+    mapped[32],
+    mapped[28],
+    mapped[13],
+    mapped[33],
+    mapped[14],
+    mapped[15],
+    mapped[16],
+    mapped[30],
+  ]),
+  ...chapter(2, [
+    divider(
+      "ch-search",
+      "chapter",
+      {
+        k: "TÌM TÀI LIỆU",
+        t: "Search:",
+        accent: "tìm gì để đặt lên bàn?",
+        p: "Bộ não không biết dữ liệu riêng của bạn. Vậy tìm đúng tài liệu bằng cách nào?",
+        take: "",
+      },
+      "search",
+    ),
+    mapped[0],
+    divider("before", "before", {
+      k: "TÌM KIẾM TRUYỀN THỐNG",
+      t: "Tìm theo",
+      accent: "chữ",
+      p: "Bắt đầu với dữ liệu, điều kiện và những phép so sánh.",
+      take: "Linear Search → Metadata → Inverted index",
+    }),
+    ...mapped.slice(1, 5),
+    divider("after", "after", {
+      k: "KHI THÊM MODEL VÀO TÌM KIẾM",
+      t: "Tìm theo",
+      accent: "ý nghĩa",
+      p: "Từ so khớp câu chữ đến biểu diễn và tìm kiếm theo ý nghĩa.",
+      take: "Embedding → Vector → Semantic search",
+    }),
+    mapped[25],
+    mapped[9],
+    mapped[6],
+    mapped[26],
+    mapped[27],
+    mapped[8],
+    mapped[10],
+  ]),
+  ...chapter(3, [
+    divider(
+      "ch-rag",
+      "chapter",
+      {
+        k: "ĐƯA TÀI LIỆU CHO BỘ NÃO",
+        t: "RAG:",
+        accent: "đặt tài liệu lên bàn.",
+        p: "Tìm được rồi, đưa cho bộ não đọc thế nào?",
+        take: "",
+      },
+      "desk",
+    ),
+    ...mapped.slice(17, 21),
+  ]),
+  ...chapter(4, [
+    divider(
+      "ch-end",
+      "chapter",
+      {
+        k: "NHÌN LẠI TOÀN BỘ",
+        t: "Ghép lại",
+        accent: "các mảnh.",
+        p: "Từ câu hỏi của bạn đến câu trả lời trên màn hình.",
+        take: "",
+      },
+      "all",
+    ),
+    mapped[31],
+    mapped[21],
+    mapped[22],
+    mapped[24],
+  ]),
 ];
 if (lessonsEn.length !== lessons.length)
   throw new Error("content-en.ts must have one entry per lesson");
 // Shared structure (c, refs, demo, divider) with English text on top.
 const slidesEn: Slide[] = slidesVi.map((s) => ({
   ...s,
-  ...(s.divider ? dividersEn[s.divider] : lessonsEn[s.demo]),
+  ...(s.divider ? dividersEn[s.id ?? s.divider] : lessonsEn[s.demo]),
 }));
 export const getSlides = (lang: Lang) => (lang === "en" ? slidesEn : slidesVi);
 export const getChapters = (lang: Lang) =>
@@ -625,6 +785,22 @@ export const sources: Record<string, [string, string, string?]> = {
     "https://arxiv.org/abs/2401.00368",
     "Embeddings from synthetic data (2024)",
   ],
+  gpt2: [
+    "GPT-2 (2019)",
+    "https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf",
+  ],
+  gpt3: ["GPT-3 (2020)", "https://arxiv.org/abs/2005.14165"],
+  llama3: ["The Llama 3 Herd of Models (2024)", "https://arxiv.org/abs/2407.21783"],
+  mistral: ["Mistral 7B (2023)", "https://arxiv.org/abs/2310.06825"],
+  gemma2: ["Gemma 2 (2024)", "https://arxiv.org/abs/2408.00118"],
+  mixtral: ["Mixtral of Experts (2024)", "https://arxiv.org/abs/2401.04088"],
+  deepseekv3: ["DeepSeek-V3 (2024)", "https://arxiv.org/abs/2412.19437"],
+  claudeModels: [
+    "Claude models overview",
+    "https://platform.claude.com/docs/en/about-claude/models/overview",
+  ],
+  gemini3: ["Gemini 3 developer guide", "https://ai.google.dev/gemini-api/docs/gemini-3"],
+  openaiModels: ["OpenAI models", "https://developers.openai.com/api/docs/models"],
   collapse: [
     "Model collapse (2023)",
     "https://arxiv.org/abs/2305.17493",

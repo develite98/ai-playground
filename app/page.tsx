@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { getSlides, getChapters, sources } from "./content";
-import { Demo } from "./demos";
+import { Demo, StoryMap } from "./demos";
 import { LangContext, type Lang } from "./i18n";
 const SLIDE_COUNT = getSlides("vi").length;
 const LANG_KEY = "ai-playground-lang";
@@ -115,7 +115,16 @@ export default function Home() {
   return (
     <LangContext.Provider value={lang}>
     <div className="app-shell no-header">
-      {slide.divider ? (
+      {slide.divider === "chapter" ? (
+        <main className="section-title chapter" key={`${index}-${lang}`}>
+          <span className="section-kicker">{slide.k}</span>
+          <h1>
+            {slide.t} <em>{slide.accent}</em>
+          </h1>
+          <p>{slide.p}</p>
+          <StoryMap focus={slide.focus} />
+        </main>
+      ) : slide.divider ? (
         <main
           className={"section-title " + slide.divider}
           key={`${index}-${lang}`}

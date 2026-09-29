@@ -9,29 +9,44 @@ export type LessonText = {
   dev: string[];
 };
 export const chaptersEn = [
-  "Before AI",
-  "After AI",
-  "Model & LLM",
-  "RAG",
-  "Generative AI",
+  "The big picture",
+  "LLM: the brain",
+  "Search: finding documents",
+  "RAG: onto the desk",
+  "Putting it together",
 ];
-export const dividersEn: Record<"before" | "after", LessonText> = {
-  before: {
-    k: "TRADITIONAL SEARCH",
-    t: "Before",
-    accent: "AI",
-    p: "Start with data, conditions and comparisons.",
-    take: "Linear Search → Metadata → Inverted index",
-    dev: [],
-  },
-  after: {
-    k: "ADDING A MODEL TO THE SYSTEM",
-    t: "After",
-    accent: "AI",
-    p: "From matching words to representing and searching by meaning.",
-    take: "Embedding → Vector → Semantic search",
-    dev: [],
-  },
+const d = (k: string, t: string, accent: string, p: string, take = ""): LessonText => ({
+  k,
+  t,
+  accent,
+  p,
+  take,
+  dev: [],
+});
+export const dividersEn: Record<string, LessonText> = {
+  "ch-llm": d("THE BRAIN THAT WRITES THE ANSWER", "LLM:", "the brain.", "How does the brain write text?"),
+  "ch-search": d(
+    "FINDING DOCUMENTS",
+    "Search:",
+    "what goes on the desk?",
+    "The brain doesn't know your own data. So how do we find the right documents?",
+  ),
+  "ch-rag": d("HANDING DOCUMENTS TO THE BRAIN", "RAG:", "onto the desk.", "We found them. How does the brain get to read them?"),
+  "ch-end": d("THE WHOLE PICTURE", "Putting the pieces", "together.", "From your question to the answer on screen."),
+  before: d(
+    "TRADITIONAL SEARCH",
+    "Search by",
+    "words",
+    "Start with data, conditions and comparisons.",
+    "Linear Search → Metadata → Inverted index",
+  ),
+  after: d(
+    "ADDING A MODEL TO SEARCH",
+    "Search by",
+    "meaning",
+    "From matching words to representing and searching by meaning.",
+    "Embedding → Vector → Semantic search",
+  ),
 };
 export const lessonsEn: LessonText[] = [
   {
@@ -173,8 +188,8 @@ export const lessonsEn: LessonText[] = [
     k: "11 / OPENING THE BOX",
     t: "A model is",
     accent: "a learned function.",
-    p: "Data goes in, a result comes out. The architecture defines how to compute; the weights hold what the model has learned.",
-    take: "Code + architecture + weights + input processing rules → model behavior.",
+    p: "An LLM is like your phone keyboard's next-word suggestions, only vastly bigger: it looks at the text so far and guesses what comes next. Everything it knows lives in billions of numbers called weights, learned from huge amounts of text.",
+    take: "Model = architecture (how to compute) + weights (what it has learned).",
     dev: [
       "Model = architecture (how to compute) + weights (learned numbers), usually stored as tensors in a checkpoint.",
       "“Model” covers classifiers, embedding models, text and image generators; they differ in inputs and outputs.",
@@ -185,10 +200,11 @@ export const lessonsEn: LessonText[] = [
     k: "12 / WHAT DOES “LEARNING” MEAN?",
     t: "Predict. Measure the error.",
     accent: "Adjust.",
-    p: "Training repeats: predict → compute loss → update weights to reduce the error. Inference runs with the learned weights.",
-    take: "Typing a normal prompt does not retrain the model.",
+    p: "How an LLM learns: take an existing sentence, hide the next word, make the model guess. When it guesses wrong, nudge the weights a little so it does better next time. Repeat over trillions of words. When you use it (inference), the model just runs with the learned weights.",
+    take: "After training the weights are frozen: typing a prompt teaches the model nothing new.",
     dev: [
-      "Demo: `y = w·x` with x = 1, target 8, `loss = (y − 8)²`. Each step: `w ← w − η·∂loss/∂w` with η = 0.1.",
+      "“Guess the next word” tab: `loss = −ln p(answer)` (cross-entropy). Each step adds `η·(1 − p)` to the answer's score and subtracts `η·p` from the others: the true softmax gradient, applied directly to 4 scores instead of billions of weights.",
+      "“One knob” tab: `y = w·x` with x = 1, target 8, `loss = (y − 8)²`. Each step: `w ← w − η·∂loss/∂w` with η = 0.1.",
       "LLMs use the same idea with billions of parameters; gradients are computed by backpropagation.",
       "A prompt is inference: weights don't change. Fine-tuning updates weights; RAG only changes the context.",
     ],
@@ -248,8 +264,8 @@ export const lessonsEn: LessonText[] = [
     k: "17 / WHEN THE MODEL DOESN'T KNOW YOUR SHOP",
     t: "Let the AI read",
     accent: "the right documents.",
-    p: "RAG = Retrieval-Augmented Generation. Find relevant documents, put them into the context, then ask the model to answer from them.",
-    take: "RAG is a way to structure a system, not a new model.",
+    p: "RAG = Retrieval-Augmented Generation: find relevant documents, put them on the “desk” (the context), then let the model read them and answer.",
+    take: "RAG teaches the model nothing new: it only puts documents on the desk for this one question.",
     dev: [
       "LLM weights are fixed after training; RAG brings fresh data into the context at question time.",
       "Retrieval can be keyword, vector, hybrid, SQL or an API; a vector DB is not required.",
@@ -357,9 +373,9 @@ export const lessonsEn: LessonText[] = [
   },
   {
     k: "11 / HOW A MODEL LEARNS WHERE THINGS GO",
-    t: "How does a model learn",
+    t: "How does an embedding model learn",
     accent: "where things go?",
-    p: "In the past, people had to score every item on every criterion by hand. Today, a model learns from huge numbers of sentence pairs: pairs with the same meaning are pulled together, different ones pushed apart. Repeat that, and the map takes shape on its own.",
+    p: "In the past, people had to score every item on every criterion by hand. Today, a model learns from huge numbers of sentence pairs: pairs with the same meaning are pulled together, different ones pushed apart. Repeat that, and the map takes shape on its own. (LLMs learn by themselves too, but to guess the next word, and the result lives in their weights.)",
     take: "“Self-taught” means nobody scores each example. People still choose what the model learns from.",
     dev: [
       "Hand-crafted features: people invent dimensions such as “warmth” and score them. Easy to read, but it doesn't scale to millions of concepts.",
@@ -387,5 +403,73 @@ export const lessonsEn: LessonText[] = [
     p: "",
     take: "",
     dev: [],
+  },
+  {
+    k: "THE BIG PICTURE",
+    t: "Behind",
+    accent: "an AI answer.",
+    p: "When you ask ChatGPT or have Copilot write code, four parts work together: the app takes your question, search finds documents, the “desk” (context) holds what the model gets to read, and the LLM is the brain that writes the answer.",
+    take: "Like an open-book exam: knowledge in your head, a library outside, and a few pages on your desk.",
+    dev: [
+      "The LLM only takes text in and gives text out; chat history, document search, display and file writes are all done by the app.",
+      "This session goes in order: LLM → Search → RAG → putting it together.",
+    ],
+  },
+  {
+    k: "WHAT THE MODEL REMEMBERS VS READS",
+    t: "What does the model remember?",
+    accent: "What does it read?",
+    p: "An LLM learns from huge amounts of text, and what it learns lives in its weights, like knowledge in your head. But it remembers imprecisely, doesn't know recent news, and doesn't know your own data. To answer correctly, the right documents must be put on the “desk” for it to read.",
+    take: "The vector database never goes inside the model's head. Only the text of the documents is put on the desk.",
+    dev: [
+      "Weights: learned during training, fixed at question time; changing them means fine-tuning.",
+      "Context: everything sent with each question (system prompt, history, documents, question); limited by the context window and billed per token.",
+      "Search / vector DB live outside the model: the app searches, then copies the documents' text into the context.",
+      "Even with documents on the desk it can be wrong: the model may misread or add from memory, so ask it to stick to sources and cite them.",
+    ],
+  },
+  {
+    k: "THE WHOLE SYSTEM",
+    t: "The whole",
+    accent: "system.",
+    p: "",
+    take: "",
+    dev: [],
+  },
+  {
+    k: "PARAMETERS · WEIGHTS",
+    t: "Parameters are",
+    accent: "learned tuning knobs.",
+    p: "Remember the tiny model on the previous slide: a single number w, slowly learned toward 8. An LLM is the same, but with billions of such numbers. They're called parameters or weights: “8B” means 8 billion numbers.",
+    take: "More parameters usually means knowing more, but also heavier, slower and more expensive to run.",
+    dev: [
+      "Each parameter is usually stored in 16 bits (2 bytes): 8B parameters ≈ 16 GB. 4-bit quantization shrinks that to about 4–5 GB at a small quality cost.",
+      "MoE (Mixture of Experts) such as Mixtral or DeepSeek-V3: huge total parameters, but each token uses only part of them (“active” parameters), so compute is cheaper than a dense model of the same size; memory must still hold all of them.",
+      "GPT-4o, Claude and Gemini don't publish parameter counts. Parameter count isn't the only measure of quality either: data and training matter just as much.",
+    ],
+  },
+  {
+    k: "INSIDE THE LLM",
+    t: "Through",
+    accent: "32 layers.",
+    p: "Each token enters the model as a vector of 4096 numbers. The vectors pass through 32 identical layers; each layer mixes in information from earlier tokens and updates them. At the end, the last token's vector is used to guess the next word.",
+    take: "There are no words inside an LLM, only vectors refined layer by layer.",
+    dev: [
+      "Each layer = attention (mixes information between tokens) + feed-forward (transforms each vector). The result is added to the old vector (residual), so vectors are “edited”, not replaced.",
+      "Llama 3.1 8B: embedding table 128,256 × 4096 ≈ 0.53B; each layer ≈ 0.22B (attention 42M + feed-forward 176M); 32 layers ≈ 7B; the logits part ≈ 0.53B. Total ≈ 8.03B.",
+      "The “what would it guess if we stopped here” view mimics the logit lens technique; the words and probabilities in the demo are illustrative.",
+    ],
+  },
+  {
+    k: "KEYWORDS YOU'LL MEET",
+    t: "A small dictionary",
+    accent: "for working with LLMs.",
+    p: "Words you'll meet in API docs, pricing pages and AI meetings. Click each one for a plain explanation, an example, and the slide that covers it.",
+    take: "No need to memorize them now: each word comes back later.",
+    dev: [
+      "Context window and max output change with every model generation; check the provider's models page (or Models API) before designing.",
+      "The same text gives different token counts under different tokenizers, so two providers' “1M tokens” don't hold exactly the same amount of text.",
+      "A long context doesn't mean every part is read carefully: information in the middle of a very long input can be missed, so RAG and picking the right documents still matter.",
+    ],
   },
 ];
