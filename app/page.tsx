@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   BookOpen,
   Lightbulb,
-  ChevronDown,
   ExternalLink,
   Database,
   ListFilter,
@@ -21,8 +20,19 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { slides, chapters, sources } from "./content";
+import { getSlides, getChapters, sources } from "./content";
 import { Demo } from "./demos";
+import { LangContext, type Lang } from "./i18n";
+const SLIDE_COUNT = getSlides("vi").length;
+const LANG_KEY = "ai-playground-lang";
+function initialLang(): Lang {
+  // Storage can be blocked (private mode, disabled site data); fall back to Vietnamese.
+  try {
+    return localStorage.getItem(LANG_KEY) === "en" ? "en" : "vi";
+  } catch {
+    return "vi";
+  }
+}
 const keywordPattern =
   /(Linear Search|inverted index|metadata|Semantic search|semantic search|embedding model|Embedding model|embedding|Embedding|vector database|Vector database|vector DB|Vector DB|vector|Vector|tokenizer|Tokenizer|token ID|Token ID|Attention|attention|Transformer|transformer|Training|training|Inference|inference|RAG|Generative AI|Cosine similarity|cosine similarity|Temperature|temperature|chunk|Chunk|Hybrid search|hybrid search|Reranker|reranker|latent diffusion|logits|loss|top-k)/gi;
 function Highlight({ text }: { text: string }) {
@@ -43,22 +53,35 @@ function Highlight({ text }: { text: string }) {
 export default function Home() {
   const [index, setIndex] = useState(0),
     [open, setOpen] = useState(false),
-    [notes, setNotes] = useState(false);
+    [lang, setLang] = useState<Lang>(initialLang);
+  const t = <T,>(vi: T, en: T) => (lang === "en" ? en : vi);
+  const slides = getSlides(lang),
+    chapters = getChapters(lang);
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    document.title =
+      lang === "en"
+        ? "AI Playground · From zero to aha!"
+        : "AI Playground · Từ zero đến aha!";
+    try {
+      localStorage.setItem(LANG_KEY, lang);
+    } catch {
+      // Storage unavailable: the choice simply isn't remembered.
+    }
+  }, [lang]);
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [index]);
   const go = useCallback((n: number) => {
-    const next = Math.max(0, Math.min(slides.length - 1, n));
+    const next = Math.max(0, Math.min(SLIDE_COUNT - 1, n));
     setIndex(next);
-    setNotes(false);
     history.replaceState(null, "", `#slide-${next + 1}`);
   }, []);
   useEffect(() => {
     const load = () => {
       const n = Number(location.hash.replace("#slide-", ""));
-      if (Number.isInteger(n) && n >= 1 && n <= slides.length) {
+      if (Number.isInteger(n) && n >= 1 && n <= SLIDE_COUNT) {
         setIndex(n - 1);
-        setNotes(false);
       }
     };
     load();
@@ -90,9 +113,13 @@ export default function Home() {
   const slide = slides[index],
     last = index === slides.length - 1;
   return (
+    <LangContext.Provider value={lang}>
     <div className="app-shell no-header">
       {slide.divider ? (
-        <main className={"section-title " + slide.divider} key={index}>
+        <main
+          className={"section-title " + slide.divider}
+          key={`${index}-${lang}`}
+        >
           <div className="section-emblem">
             {slide.divider === "before" ? (
               <Database size={34} />
@@ -110,14 +137,14 @@ export default function Home() {
           <div className="section-path">
             {(slide.divider === "before"
               ? [
-                  [Database, "Dữ liệu"],
-                  [ListFilter, "Điều kiện"],
-                  [Search, "So khớp"],
+                  [Database, t("Dữ liệu", "Data")],
+                  [ListFilter, t("Điều kiện", "Conditions")],
+                  [Search, t("So khớp", "Matching")],
                 ]
               : [
                   [Layers, "Embedding"],
                   [Network, "Vector"],
-                  [Search, "Ý nghĩa"],
+                  [Search, t("Ý nghĩa", "Meaning")],
                 ]
             ).map(([Icon, label], i) => (
               <div key={i}>
@@ -131,17 +158,26 @@ export default function Home() {
           </div>
           <p className="section-footnote">
             {slide.divider === "before"
-              ? "Tìm kiếm chưa dùng model học máy."
-              : "AI bổ sung một cách tìm kiếm. Từ khóa, metadata và index vẫn tiếp tục được sử dụng."}
+              ? t(
+                  "Tìm kiếm chưa dùng model học máy.",
+                  "Search without machine-learning models.",
+                )
+              : t(
+                  "AI bổ sung một cách tìm kiếm. Từ khóa, metadata và index vẫn tiếp tục được sử dụng.",
+                  "AI adds another way to search. Keywords, metadata and indexes are still used.",
+                )}
           </p>
         </main>
       ) : (
         <main
           className={
-            "slide " + ([1, 2, 3].includes(slide.demo) ? "database-slide" : "")
+            "slide " +
+            ([1, 2, 3].includes(slide.demo) ? "database-slide" : "") +
+            (slide.full ? " full-slide" : "")
           }
-          key={index}
+          key={`${index}-${lang}`}
         >
+          {!slide.full && (
           <section className="intro">
             <h1>
               {slide.t.split("\n").map((t, i) => (
@@ -161,77 +197,79 @@ export default function Home() {
                 <Highlight text={slide.take} />
               </span>
             </div>
-            <button
-              className="note-toggle"
-              aria-expanded={notes}
-              onClick={() => setNotes(!notes)}
-            >
-              <BookOpen size={15} />
-              {notes ? "Thu gọn ghi chú" : "Hiểu thêm một chút"}
-              <ChevronDown
-                size={15}
-                style={{ transform: notes ? "rotate(180deg)" : undefined }}
-              />
-            </button>
+            {slide.dev.length > 0 && (
+              <div className="dev-notes">
+                <ul>
+                  {slide.dev.map((line) => (
+                    <li key={line}>
+                      {line
+                        .split(/`([^`]+)`/)
+                        .map((part, i) =>
+                          i % 2 ? <code key={i}>{part}</code> : part,
+                        )}
+                    </li>
+                  ))}
+                </ul>
+                {slide.refs.length > 0 && (
+                  <p className="source-links">
+                    <span>{t("Nguồn:", "Sources:")}</span>
+                    {slide.refs.map((ref) => {
+                      const [title, url, titleEn] = sources[ref];
+                      return (
+                        <a key={url} href={url} target="_blank" rel="noreferrer">
+                          {t(title, titleEn ?? title)}
+                          <ExternalLink size={11} />
+                        </a>
+                      );
+                    })}
+                  </p>
+                )}
+                {slide.c === 3 && (
+                  <p className="fineprint">
+                    {t(
+                      "Tham khảo thêm mã nguồn RAG: README, pipeline retrieval và hướng dẫn RAG.",
+                      "See also the RAG source code: README, retrieval pipeline and RAG guide.",
+                    )}
+                  </p>
+                )}
+              </div>
+            )}
           </section>
-          <section className="demo-card" aria-label={`Demo: ${slide.k}`}>
+          )}
+          {slide.full ? (
             <Demo index={slide.demo} />
-          </section>
-          {notes && (
-            <aside className="notes">
-              <div>
-                <span className="pill">GÓC CHO DEV</span>
-                <p>
-                  <Highlight text={slide.note} />
-                </p>
-              </div>
-              <div>
-                <strong>Đọc từ nguồn</strong>
-                <div className="source-links">
-                  {sources
-                    .filter((_, i) =>
-                      slide.demo < 11
-                        ? i === 3
-                        : slide.demo < 17
-                          ? i < 3
-                          : slide.demo < 21
-                            ? i === 4
-                            : i >= 4,
-                    )
-                    .map(([t, url]) => (
-                      <a key={url} href={url} target="_blank" rel="noreferrer">
-                        {t}
-                        <ExternalLink size={12} />
-                      </a>
-                    ))}
-                </div>
-                <p className="fineprint">
-                  Tham khảo thêm mã nguồn RAG: README, pipeline retrieval và
-                  hướng dẫn RAG.
-                </p>
-              </div>
-            </aside>
+          ) : (
+            <section className="demo-card" aria-label={`Demo: ${slide.k}`}>
+              <Demo index={slide.demo} />
+            </section>
           )}
         </main>
       )}
       <div className="bottom-progress">
         <Progress
           value={((index + 1) / slides.length) * 100}
-          aria-label="Tiến độ bài học"
+          aria-label={t("Tiến độ bài học", "Lesson progress")}
         />
       </div>
       <footer className="footer">
+        <div className="footer-left">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <button className="quiet">
+            <button className="quiet" aria-label={t("Nội dung", "Contents")}>
               <BookOpen size={18} />
-              <span>Nội dung</span>
+              <span>{t("Nội dung", "Contents")}</span>
             </button>
           </DialogTrigger>
           <DialogContent className="contents-dialog">
-            <DialogTitle>Hành trình từ zero đến aha!</DialogTitle>
+            <DialogTitle>
+              {t("Hành trình từ zero đến aha!", "From zero to aha!")}
+            </DialogTitle>
             <DialogDescription>
-              {slides.length} slide · Chọn một nội dung để khám phá.
+              {slides.length}{" "}
+              {t(
+                "slide · Chọn một nội dung để khám phá.",
+                "slides · Pick one to explore.",
+              )}
             </DialogDescription>
             <div className="contents-list">
               {chapters.map((ch, c) => (
@@ -256,32 +294,59 @@ export default function Home() {
               ))}
             </div>
             <div className="dialog-foot">
-              Demo chạy trong trình duyệt · Không cần API key
+              {t(
+                "Demo chạy trong trình duyệt · Không cần API key",
+                "Demos run in the browser · No API key needed",
+              )}
             </div>
           </DialogContent>
         </Dialog>
+        <div
+          className="lang-switch"
+          role="group"
+          aria-label={t("Ngôn ngữ", "Language")}
+        >
+          {(["vi", "en"] as const).map((l) => (
+            <button
+              key={l}
+              className={lang === l ? "selected" : ""}
+              aria-pressed={lang === l}
+              onClick={() => setLang(l)}
+            >
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
+        </div>
         <div className="footer-middle">
           <div className="slide-number">
             {String(index + 1).padStart(2, "0")} <span>/ {slides.length}</span>
           </div>
-          <span className="keyboard-hint">Dùng phím ← → để chuyển slide</span>
+          <span className="keyboard-hint">
+            {t("Dùng phím ← → để chuyển slide", "Use ← → to change slides")}
+          </span>
         </div>
         <div className="footer-buttons">
           <button
             className="back-button"
             disabled={index === 0}
             onClick={() => go(index - 1)}
-            aria-label="Slide trước"
+            aria-label={t("Slide trước", "Previous slide")}
           >
             <ArrowLeft size={19} />
           </button>
           <button className="primary" onClick={() => go(last ? 0 : index + 1)}>
-            {last ? "Xem lại" : slide.divider ? "Bắt đầu" : "Tiếp theo"}
+            {last
+              ? t("Xem lại", "Start over")
+              : slide.divider
+                ? t("Bắt đầu", "Start")
+                : t("Tiếp theo", "Next")}
             <ArrowRight size={18} />
           </button>
         </div>
       </footer>
     </div>
+    </LangContext.Provider>
   );
 }
 

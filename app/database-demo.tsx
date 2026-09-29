@@ -22,6 +22,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { products } from "./content";
+import { useT, type Lang } from "./i18n";
 function MatchText({ text, query }: { text: string; query: string }) {
   const at = text
     .toLocaleLowerCase("vi")
@@ -36,22 +37,33 @@ function MatchText({ text, query }: { text: string; query: string }) {
     </>
   );
 }
-const indexTerms = ["áo", "hoodie", "quần"];
-const invertedIndex = Object.fromEntries(
-  indexTerms.map((term) => [
-    term,
-    products
-      .filter((p) => p.name.toLocaleLowerCase("vi").split(/\s+/).includes(term))
-      .map((p) => p.id),
-  ]),
-);
+type Product = (typeof products)[number];
+const nameIn = (p: Product, lang: Lang) => (lang === "en" ? p.nameEn : p.name);
+// Terms chosen so both languages give the same posting lists.
+const indexTerms: Record<Lang, string[]> = {
+  vi: ["áo", "hoodie", "quần"],
+  en: ["shirt", "hoodie", "shorts"],
+};
+const invertedIndex = (lang: Lang): Record<string, string[]> =>
+  Object.fromEntries(
+    indexTerms[lang].map((term) => [
+      term,
+      products
+        .filter((p) =>
+          nameIn(p, lang).toLocaleLowerCase("vi").split(/\s+/).includes(term),
+        )
+        .map((p) => p.id),
+    ]),
+  );
 export default function DatabaseDemo({ mode }: { mode: number }) {
-  const [query, setQuery] = useState("áo"),
+  const { t, lang } = useT();
+  const index = invertedIndex(lang);
+  const [query, setQuery] = useState(t("áo", "shirt")),
     [count, setCount] = useState(0),
     [running, setRunning] = useState(false),
     [purple, setPurple] = useState(true),
     [budget, setBudget] = useState(400),
-    [term, setTerm] = useState("áo");
+    [term, setTerm] = useState(indexTerms[lang][0]);
   useEffect(() => {
     if (!running) return;
     if (count >= products.length) {
@@ -64,10 +76,12 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
   const q = query.trim();
   const matches = (p: (typeof products)[number]) =>
     mode === 1
-      ? p.name.toLocaleLowerCase("vi").includes(q.toLocaleLowerCase("vi"))
+      ? nameIn(p, lang)
+          .toLocaleLowerCase("vi")
+          .includes(q.toLocaleLowerCase("vi"))
       : mode === 2
         ? (!purple || p.color === "Tím") && p.price <= budget
-        : invertedIndex[term].includes(p.id);
+        : index[term].includes(p.id);
   const result = products.filter(
     (p, i) => (mode !== 1 || i < count) && matches(p),
   );
@@ -84,14 +98,15 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
           <strong>products</strong>
         </span>
         <span className="db-label">
-          6 bản ghi · {mode === 3 ? "có index" : "chưa có index"}
+          {t("6 bản ghi", "6 records")} ·{" "}
+          {mode === 3 ? t("có index", "indexed") : t("chưa có index", "no index")}
         </span>
       </div>
       {mode === 1 ? (
         <div className="db-query">
           <label htmlFor="search-rows">
             <Search size={17} />
-            Từ cần tìm
+            {t("Từ cần tìm", "Search term")}
           </label>
           <input
             id="search-rows"
@@ -101,7 +116,7 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
               setCount(0);
               setRunning(false);
             }}
-            placeholder="Ví dụ: áo, hoodie…"
+            placeholder={t("Ví dụ: áo, hoodie…", "e.g. shirt, hoodie…")}
           />
           <code>
             name.includes(<b>"{q || "…"}"</b>)
@@ -111,18 +126,18 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
         <div className="db-filter">
           <label>
             <Switch
-              aria-label="Chỉ màu tím"
+              aria-label={t("Chỉ màu tím", "Purple only")}
               checked={purple}
               onCheckedChange={setPurple}
             />
-            color = <b>"Tím"</b>
+            color = <b>&quot;{t("Tím", "Purple")}&quot;</b>
           </label>
           <div>
             <label>
-              price ≤ <b>{budget}.000đ</b>
+              price ≤ <b>{t(`${budget}.000đ`, `${budget}k VND`)}</b>
             </label>
             <Slider
-              aria-label="Giá tối đa (nghìn đồng)"
+              aria-label={t("Giá tối đa (nghìn đồng)", "Max price (thousand VND)")}
               min={150}
               max={600}
               step={10}
@@ -133,15 +148,15 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
         </div>
       ) : (
         <div className="posting-lists">
-          {indexTerms.map((t) => (
+          {indexTerms[lang].map((x) => (
             <button
-              className={term === t ? "selected" : ""}
-              key={t}
-              onClick={() => setTerm(t)}
+              className={term === x ? "selected" : ""}
+              key={x}
+              onClick={() => setTerm(x)}
             >
-              <code>{t}</code>
+              <code>{x}</code>
               <ArrowRight size={15} />
-              <span>{invertedIndex[t].join(" · ")}</span>
+              <span>{index[x].join(" · ")}</span>
             </button>
           ))}
         </div>
@@ -152,7 +167,7 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
             <TableRow>
               {mode === 1 && (
                 <TableHead className="cursor-column">
-                  <span className="sr-only">Con trỏ</span>
+                  <span className="sr-only">{t("Con trỏ", "Cursor")}</span>
                 </TableHead>
               )}
               <TableHead>id</TableHead>
@@ -164,7 +179,7 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
                 </>
               )}
               <TableHead className="status-column">
-                {mode === 1 ? "So khớp" : "Kết quả"}
+                {mode === 1 ? t("So khớp", "Match") : t("Kết quả", "Result")}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -193,9 +208,9 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
                   </TableCell>
                   <TableCell className="name-cell">
                     {mode === 1 && visited ? (
-                      <MatchText text={p.name} query={q} />
+                      <MatchText text={nameIn(p, lang)} query={q} />
                     ) : (
-                      p.name
+                      nameIn(p, lang)
                     )}
                   </TableCell>
                   {mode === 2 && (
@@ -204,7 +219,7 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
                         <span
                           className={p.color === "Tím" ? "purple-value" : ""}
                         >
-                          {p.color}
+                          {t(p.color, p.colorEn)}
                         </span>
                       </TableCell>
                       <TableCell>{p.price}k</TableCell>
@@ -221,16 +236,18 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
                         good ? (
                           <>
                             <Check size={14} />
-                            Giữ lại
+                            {t("Giữ lại", "Keep")}
                           </>
                         ) : (
                           <>
                             <Minus size={14} />
-                            {mode === 3 ? "Không đọc" : "Bỏ qua"}
+                            {mode === 3
+                              ? t("Không đọc", "Not read")
+                              : t("Bỏ qua", "Skip")}
                           </>
                         )
                       ) : (
-                        "Chưa đọc"
+                        t("Chưa đọc", "Not read yet")
                       )}
                     </span>
                   </TableCell>
@@ -246,10 +263,11 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
             {current ? (
               <>
                 <span>
-                  Đang kiểm tra <b>{current.id}</b>
+                  {t("Đang kiểm tra", "Checking")} <b>{current.id}</b>
                 </span>
                 <code>
-                  "{current.name}" <span>chứa</span> "{q}"{" "}
+                  &quot;{nameIn(current, lang)}&quot;{" "}
+                  <span>{t("chứa", "contains")}</span> &quot;{q}&quot;{" "}
                   <b
                     className={matches(current) ? "true-value" : "false-value"}
                   >
@@ -259,8 +277,13 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
               </>
             ) : (
               <>
-                <span>Con trỏ ở đầu bảng</span>
-                <p>Đọc một dòng → kiểm tra tên → chuyển sang dòng kế.</p>
+                <span>{t("Con trỏ ở đầu bảng", "Cursor at the top")}</span>
+                <p>
+                  {t(
+                    "Đọc một dòng → kiểm tra tên → chuyển sang dòng kế.",
+                    "Read a row → check the name → move to the next row.",
+                  )}
+                </p>
               </>
             )}
           </div>
@@ -268,10 +291,10 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
             <button className="small-button" disabled={!q} onClick={run}>
               {running ? <Pause size={16} /> : <Play size={16} />}{" "}
               {running
-                ? "Tạm dừng"
+                ? t("Tạm dừng", "Pause")
                 : count === products.length
-                  ? "Chạy lại"
-                  : "Chạy tự động"}
+                  ? t("Chạy lại", "Run again")
+                  : t("Chạy tự động", "Auto run")}
             </button>
             <button
               className="small-button"
@@ -279,11 +302,11 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
               onClick={() => setCount((c) => c + 1)}
             >
               <StepForward size={16} />
-              Từng dòng
+              {t("Từng dòng", "One row")}
             </button>
             <button
               className="quiet"
-              aria-label="Đặt lại phép quét"
+              aria-label={t("Đặt lại phép quét", "Reset the scan")}
               onClick={() => {
                 setCount(0);
                 setRunning(false);
@@ -292,7 +315,7 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
               <RotateCcw size={16} />
             </button>
             <span>
-              {count}/{products.length} lần kiểm tra
+              {count}/{products.length} {t("lần kiểm tra", "checks")}
             </span>
           </div>
         </>
@@ -300,7 +323,9 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
       <div className="db-results" aria-live="polite">
         <span>
           <b>RESULT</b>
-          <span>{result.length} bản ghi</span>
+          <span>
+            {result.length} {t("bản ghi", "records")}
+          </span>
         </span>
         <div>
           {result.length ? (
@@ -308,8 +333,8 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
           ) : (
             <span>
               {mode === 1 && count === 0
-                ? "Chưa có kết quả"
-                : "Không có bản ghi phù hợp"}
+                ? t("Chưa có kết quả", "No results yet")
+                : t("Không có bản ghi phù hợp", "No matching records")}
             </span>
           )}
         </div>
@@ -317,21 +342,47 @@ export default function DatabaseDemo({ mode }: { mode: number }) {
       <p className="db-caption">
         {mode === 1 ? (
           <>
-            <b>Linear Search · O(n)</b> — muốn lấy tất cả kết quả, đọc hết n
-            dòng.
+            <b>Linear Search · O(n)</b> —{" "}
+            {t(
+              "muốn lấy tất cả kết quả, đọc hết n dòng.",
+              "to get every match, read all n rows.",
+            )}
           </>
         ) : mode === 2 ? (
           <>
-            Điều kiện <b>AND</b>: giữ lại bản ghi thỏa cả màu lẫn giá. Chưa có
-            index, vẫn phải xét từng dòng.
+            {t("Điều kiện", "Condition")} <b>AND</b>:{" "}
+            {t(
+              "giữ lại bản ghi thỏa cả màu lẫn giá. Chưa có index, vẫn phải xét từng dòng.",
+              "keep records that satisfy both color and price. Without an index, every row is still checked.",
+            )}
           </>
         ) : (
           <>
-            Tra từ trong <b>inverted index</b> → lấy posting list → đọc đúng các
-            ID liên quan.
+            {t("Tra từ trong", "Look up the term in the")} <b>inverted index</b>{" "}
+            →{" "}
+            {t(
+              "lấy posting list → đọc đúng các ID liên quan.",
+              "get the posting list → read only those IDs.",
+            )}
           </>
         )}
       </p>
+      {mode === 3 && term === indexTerms[lang][0] && (
+        <p className="db-callout">
+          {t(
+            <>
+              <b>P02 Hoodie lavender</b> cũng là áo, nhưng tên không chứa từ
+              “áo” → index không trả về. Index chỉ biết những từ thực sự xuất
+              hiện.
+            </>,
+            <>
+              <b>P02 Lavender hoodie</b> is also a top you could wear, but its
+              name doesn&apos;t contain “shirt” → the index never returns it. An
+              index only knows words that actually appear.
+            </>,
+          )}
+        </p>
+      )}
     </div>
   );
 }

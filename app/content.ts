@@ -1,4 +1,6 @@
-export const chapters = [
+import type { Lang } from "./i18n";
+import { chaptersEn, dividersEn, lessonsEn } from "./content-en";
+const chaptersVi = [
   "Trước khi có AI",
   "Sau khi có AI",
   "Model & LLM",
@@ -9,11 +11,15 @@ const lessons = [
   {
     c: 0,
     k: "BẮT ĐẦU TỪ ĐIỀU QUEN THUỘC",
-    t: "Một chiếc áo.\nCả một",
-    accent: "hành trình AI.",
-    p: "Bạn muốn mua “áo đi Đà Lạt”. Một website tìm đúng chiếc áo cho bạn bằng cách nào?",
-    take: "Cùng mở nắp chiếc hộp tìm kiếm. Mỗi bước, một điều mới.",
-    note: "Hành trình này dùng một shop quần áo giả lập. Các demo chạy ngay trên trình duyệt, không gọi model hay API. Mục tiêu là hiểu cơ chế trước khi học framework. AI là lĩnh vực rộng; buổi này tập trung vào tìm kiếm dùng embedding và AI tạo sinh.",
+    t: "Khi bạn\nbấm tìm kiếm,",
+    accent: "máy làm gì?",
+    p: "Mỗi ngày ta tìm kiếm trên internet rất nhiều lần. Ví dụ: gõ “áo đi Đà Lạt” vào một shop quần áo. Từ lúc bấm tìm đến lúc thấy kết quả, phía sau đã diễn ra những gì?",
+    take: "Linear Search → Metadata → Inverted index → Embedding → Semantic search",
+    dev: [
+      "Demo chạy trong trình duyệt với catalog 6 sản phẩm tự đặt, không gọi model hay API.",
+      "Buổi này đi theo một nhánh của AI: tìm kiếm bằng embedding, LLM, RAG và tạo ảnh.",
+    ],
+    refs: ["invIndex", "embedding"],
   },
   {
     c: 0,
@@ -22,7 +28,12 @@ const lessons = [
     accent: "Linear Search",
     p: "Linear Search: đi từ đầu danh sách, kiểm tra từng sản phẩm và giữ lại những món khớp từ bạn gõ.",
     take: "Danh sách càng dài, số lần kiểm tra càng nhiều.",
-    note: "Demo so khớp chuỗi con, không phân biệt hoa thường. Muốn lấy tất cả kết quả thì phải duyệt đủ n sản phẩm: O(n). Nếu chỉ lấy kết quả đầu tiên, trường hợp tốt nhất là O(1), xấu nhất O(n). Đây là cách nhập môn, không phải mọi hệ thống trước AI đều tìm kiểu này.",
+    dev: [
+      "Lấy tất cả kết quả: luôn đọc đủ n dòng → O(n). Chỉ cần kết quả đầu tiên: tốt nhất O(1), xấu nhất O(n).",
+      "Trong SQL, `WHERE name LIKE '%áo%'` có wildcard ở đầu nên B‑tree index thông thường không giúp được; database vẫn quét từng dòng.",
+      "Demo so khớp chuỗi con, không phân biệt hoa thường.",
+    ],
+    refs: ["linear"],
   },
   {
     c: 0,
@@ -31,7 +42,12 @@ const lessons = [
     accent: "metadata",
     p: "Màu sắc, size, giá và chất liệu giúp diễn đạt điều kiện rõ ràng: áo tím, dưới 400.000đ.",
     take: "Filter kiểm tra điều kiện. Có metadata chưa có nghĩa là tìm nhanh hơn.",
-    note: "Metadata là dữ liệu mô tả mỗi bản ghi. Ví dụ color=purple, price=349000. Nếu vẫn lọc từng dòng thì chi phí vẫn tuyến tính. Index phù hợp mới giúp giảm dữ liệu phải đọc. Với nhiều điều kiện AND, sản phẩm phải thỏa tất cả điều kiện.",
+    dev: [
+      "Metadata là thuộc tính có cấu trúc của bản ghi: `color = 'Tím'`, `price = 349000`.",
+      "Nhiều điều kiện AND: bản ghi phải thỏa tất cả điều kiện.",
+      "Không có index thì filter vẫn quét từng dòng, O(n). Index B‑tree trên price cho phép chỉ đọc vùng `price ≤ 400000`.",
+    ],
+    refs: ["sqlIndex"],
   },
   {
     c: 0,
@@ -40,7 +56,12 @@ const lessons = [
     accent: "inverted index",
     p: "Inverted index lưu “từ này xuất hiện ở sản phẩm nào”. Gõ “áo”, tra thẳng danh sách ID liên quan.",
     take: "Tìm kiếm truyền thống đã có index, full-text và BM25 từ trước AI hiện đại.",
-    note: "Inverted index ánh xạ term sang posting list. BM25 xếp hạng dựa trên tín hiệu từ khóa như độ hiếm của từ, tần suất và độ dài tài liệu. Index tốn dung lượng và chi phí cập nhật. SQL B-tree cũng hữu ích với nhiều kiểu lọc có cấu trúc, tùy truy vấn và dữ liệu.",
+    dev: [
+      "Inverted index ánh xạ term → posting list (danh sách ID chứa term). Tra một term không cần quét bảng.",
+      "BM25 xếp hạng theo độ hiếm của từ (IDF), tần suất trong tài liệu (TF) và độ dài tài liệu.",
+      "Đổi lại: tốn dung lượng, phải cập nhật index khi dữ liệu đổi, và chỉ biết những từ thực sự xuất hiện.",
+    ],
+    refs: ["invIndex", "bm25"],
   },
   {
     c: 0,
@@ -49,7 +70,12 @@ const lessons = [
     accent: "đâu có trong tên?",
     p: "Bạn nói về một nhu cầu. Sản phẩm lại nói về hoodie, nỉ và giữ ấm. Làm sao kết nối hai cách nói?",
     take: "Semantic search tìm sự gần nhau về ý nghĩa. Từ khóa vẫn rất hữu ích.",
-    note: "Tìm kiếm truyền thống có thể dùng từ đồng nghĩa, sửa chính tả và luật mở rộng truy vấn. Embedding học thêm quan hệ ngữ nghĩa từ dữ liệu. Không bảo đảm luôn hiểu đúng ý định: đi Đà Lạt có thể là mùa nóng hoặc phong cách chụp hình. Production thường kết hợp lexical và semantic search.",
+    dev: [
+      "Tìm kiếm truyền thống vẫn mở rộng được truy vấn bằng từ đồng nghĩa, sửa chính tả, luật; nhưng phải có người định nghĩa trước.",
+      "Embedding học quan hệ ngữ nghĩa từ dữ liệu, nhưng không bảo đảm hiểu đúng ý định: “đi Đà Lạt” có thể là đi chụp ảnh chứ không cần áo ấm.",
+      "Production thường kết hợp cả hai: lexical + semantic (hybrid search).",
+    ],
+    refs: ["embedding", "hybrid"],
   },
   {
     c: 1,
@@ -58,16 +84,27 @@ const lessons = [
     accent: "thành bộ số.",
     p: "Hãy bắt đầu từ vị giác: [độ ngọt, độ cay, độ nóng]. Mỗi vị trí là một chiều có thứ tự cố định.",
     take: "Vector là một bộ số có thứ tự. Đổi thứ tự các chiều là đổi ý nghĩa.",
-    note: "Ở đây các chiều do con người đặt tên và các giá trị 0–10 là giả định. Trà sữa [8,0,2], lẩu cay [1,9,9]. Đây là cách trực giác hóa vector, không phải embedding học từ model. Chuẩn hóa thang đo có thể ảnh hưởng đáng kể đến khoảng cách.",
+    dev: [
+      "Vector là một bộ số có thứ tự; mỗi vị trí là một chiều.",
+      "Ở đây tên chiều và giá trị 0–10 do ta tự đặt, chưa phải embedding học từ model.",
+      "Các chiều có thang đo lệch nhau (0–10 so với 0–1.000.000đ) sẽ làm một chiều lấn át khi tính khoảng cách → cần chuẩn hóa.",
+    ],
+    refs: ["embedding"],
   },
   {
     c: 1,
-    k: "06 / TỪ SỐ DO TA ĐẶT ĐẾN SỐ ĐƯỢC HỌC",
-    t: "Embedding:",
-    accent: "một địa chỉ ý nghĩa.",
-    p: "Embedding model biến văn bản thành vector. Những nội dung liên quan có thể nằm gần nhau trong cùng không gian.",
-    take: "Trong embedding thật, từng chiều thường không có tên dễ hiểu như “độ ấm”.",
-    note: "Dùng cùng một embedding model và đúng quy ước encode query/document. Hai model cùng trả 768 chiều vẫn chưa chắc có không gian tương thích. Một đoạn văn thường được biểu diễn bằng một vector dùng cho retrieval; đừng đồng nhất nó với mọi token vector bên trong LLM.",
+    k: "10 / AI ĐẶT CÁC ĐIỂM VÀO?",
+    t: "Ai đặt các điểm",
+    accent: "vào không gian?",
+    p: "Không ai ngồi đặt tay từng tọa độ. Một chương trình gọi là embedding model đọc mô tả sản phẩm rồi trả về vector. Làm vậy cho từng sản phẩm và lưu lại, ta có kho dữ liệu để tìm kiếm.",
+    take: "Embedding model giống người vẽ bản đồ. Vector database giống tấm bản đồ đã cắm ghim.",
+    dev: [
+      "Query và document phải encode bằng cùng một model, đúng quy ước của model đó (có model yêu cầu tiền tố như “query:” / “passage:”).",
+      "Hai model cùng trả 768 chiều vẫn là hai không gian khác nhau; không trộn vector của chúng. Đổi model → encode lại toàn bộ dữ liệu.",
+      "Trục trong demo có tên (ấm, thoải mái, trang trọng) cho dễ hình dung; các chiều của embedding thật do model tự học và không có tên.",
+      "Sản phẩm đổi mô tả → encode lại và upsert; sản phẩm bị xóa → xóa theo ID.",
+    ],
+    refs: ["embedding", "vectorSearch"],
   },
   {
     c: 1,
@@ -76,25 +113,42 @@ const lessons = [
     accent: "một hàng dài.",
     p: "Mỗi sản phẩm là một điểm. Đặt nhu cầu của bạn vào cùng bản đồ, rồi tìm những điểm gần nó.",
     take: "Bản đồ 3D này có 3 chiều tự đặt. Vector thật thường có hàng trăm hoặc hàng nghìn chiều.",
-    note: "Kéo để xoay hoặc dùng thanh góc xoay. Ba trục minh họa là độ ấm, độ thoải mái, độ trang trọng. Demo dùng khoảng cách Euclid với dữ liệu tự đặt. Nếu chiếu embedding thật xuống 3D, phép chiếu có thể làm méo khoảng cách. Vector search vẫn có thể brute-force từng vector; index mới giúp tăng tốc.",
+    dev: [
+      "Demo: 3 chiều tự đặt, khoảng cách Euclid, lấy top-3.",
+      "Embedding thật có hàng trăm đến hàng nghìn chiều. Chiếu xuống 2D/3D (PCA, t-SNE, UMAP) để xem được, nhưng sẽ làm méo khoảng cách.",
+      "Brute-force: so query với từng vector, chi phí O(n·d). Index ANN giúp tăng tốc (xem slide Vector database).",
+    ],
+    refs: ["vectorSearch"],
   },
   {
     c: 1,
     k: "08 / GẦN NHAU ĐẾN MỨC NÀO?",
     t: "Score là",
     accent: "một phép đo.",
-    p: "Cosine similarity so hướng của hai vector. Càng cùng hướng, score càng gần 1. Thử đổi hướng vector truy vấn.",
+    p: "Cosine similarity so hướng của hai vector. Càng cùng hướng, score càng gần 1. Đổi nhu cầu của bạn, chọn một sản phẩm và xem score được tính ra sao.",
     take: "Score 0,9 không có nghĩa là “đúng 90%”.",
-    note: "Cosine = (q·v)/(||q|| ||v||), miền [-1,1] với vector khác 0. Euclidean distance càng nhỏ càng gần; cosine similarity càng lớn càng giống. Không so trực tiếp điểm BM25, cosine, RRF và reranker như cùng một thang đo. Threshold phụ thuộc model, corpus và mục tiêu đánh giá.",
+    dev: [
+      "`cos(q, v) = q·v / (‖q‖·‖v‖)`, nằm trong [-1, 1] với vector khác 0.",
+      "Nếu vector đã chuẩn hóa độ dài về 1 thì cosine = dot product, và xếp hạng theo cosine trùng với xếp hạng theo Euclid.",
+      "Score của BM25, cosine, RRF và reranker khác thang đo; không so sánh hay cộng trực tiếp.",
+      "Threshold (ví dụ 0,75) phải chọn theo model và dữ liệu; không có con số dùng chung.",
+    ],
+    refs: ["vectorSearch"],
   },
   {
     c: 1,
-    k: "09 / NƠI LƯU CÁC ĐỊA CHỈ",
-    t: "Vector database",
-    accent: "giữ những gì?",
-    p: "Lưu ID, vector, nội dung và metadata; hỗ trợ tìm láng giềng gần và lọc theo điều kiện.",
-    take: "Vector DB phục vụ retrieval. Nó không tự viết câu trả lời.",
-    note: "Các hệ thống có thể dùng HNSW để approximate nearest neighbor (ANN): tìm nhanh hơn bằng index dạng đồ thị nhưng có thể bỏ sót. Exact search vẫn tồn tại. ANN có trade-off giữa tốc độ, RAM và recall; filter có thể áp dụng theo nhiều chiến lược. Đây là sơ đồ ý tưởng, không phải trace thật của HNSW.",
+    k: "09 / KHÔNG GIAN NHƯ MỘT KHO DỮ LIỆU",
+    t: "Không gian này",
+    accent: "là một kho dữ liệu.",
+    p: "Mỗi sản phẩm là một điểm trong không gian. Tọa độ của điểm là một dãy số, gọi là vector. Vector database là nơi lưu các điểm này kèm thông tin sản phẩm, và giúp tìm ra điểm nào gần nhất.",
+    take: "Vector chỉ là một dãy số theo thứ tự cố định. Đổi thứ tự các số là điểm nằm ở chỗ khác.",
+    dev: [
+      "Mỗi bản ghi gồm `id` + `vector` + `payload` (tên, giá, màu…). ID giúp cập nhật hoặc xóa đúng bản ghi.",
+      "Exact search so query với mọi vector: O(n·d). ANN như HNSW (index dạng đồ thị) nhanh hơn nhiều nhưng có thể bỏ sót: đánh đổi tốc độ, RAM và recall.",
+      "Filter theo payload (giá, màu) kết hợp với tìm lân cận theo nhiều chiến lược (lọc trước, sau hoặc trong khi tìm), tùy hệ thống.",
+      "Các chiều có thang đo lệch nhau (0–10 so với 0–1.000.000đ) sẽ làm một chiều lấn át khi tính khoảng cách → cần chuẩn hóa.",
+    ],
+    refs: ["hnsw", "filtering", "vectorSearch"],
   },
   {
     c: 1,
@@ -103,7 +157,13 @@ const lessons = [
     accent: "ở phía dưới.",
     p: "Chuẩn bị vector sản phẩm trước. Khi khách tìm, chỉ cần encode truy vấn, lọc và lấy top-k kết quả.",
     take: "Cập nhật sản phẩm → cập nhật vector và metadata tương ứng.",
-    note: "Offline/indexing: chọn trường nội dung, encode, upsert vector + metadata. Online: query → cùng embedding model → vector DB + filter → top-k → hiển thị. Embedding retrieval và LLM generation là hai vai trò khác nhau. Top-k là số kết quả yêu cầu, không bảo đảm cả k đều liên quan.",
+    dev: [
+      "Indexing (offline): chọn trường nội dung → encode → upsert ID + vector + metadata.",
+      "Query (online): encode query bằng cùng model → search + filter → top-k → hiển thị.",
+      "Top-k là số kết quả yêu cầu, không bảo đảm cả k đều liên quan; có thể cần thêm threshold.",
+      "Sản phẩm đổi nội dung → encode lại và upsert; sản phẩm bị xóa → xóa theo ID.",
+    ],
+    refs: ["vectorSearch", "filtering"],
   },
   {
     c: 2,
@@ -112,7 +172,12 @@ const lessons = [
     accent: "một hàm đã học.",
     p: "Đưa dữ liệu vào, nhận kết quả ra. Kiến trúc quy định cách tính; các trọng số quyết định model đã học được gì.",
     take: "Code + kiến trúc + trọng số + quy tắc xử lý đầu vào → hành vi của model.",
-    note: "Một model có thể phân loại, tạo embedding hoặc sinh nội dung. Tham số thường là số trong các tensor. Số lượng tham số không tự quyết định chất lượng. Tokenizer và cấu hình thường đi cùng checkpoint nhưng không phải mọi model đều xử lý token văn bản.",
+    dev: [
+      "Model = kiến trúc (cách tính) + trọng số (các số đã học), thường lưu thành tensor trong checkpoint.",
+      "Cùng khái niệm “model” cho phân loại, embedding, sinh văn bản hay ảnh; khác nhau ở input/output.",
+      "Nhiều tham số hơn không tự động tốt hơn; dữ liệu và cách train quan trọng không kém.",
+    ],
+    refs: ["gradient"],
   },
   {
     c: 2,
@@ -121,7 +186,12 @@ const lessons = [
     accent: "Điều chỉnh.",
     p: "Training lặp lại: dự đoán → tính loss → cập nhật trọng số để giảm lỗi. Inference dùng trọng số đã học để chạy.",
     take: "Gõ một prompt bình thường không đồng nghĩa model được huấn luyện lại.",
-    note: "Đây là mô hình một trọng số y=w×x với x=1, mục tiêu y=8. Gradient descent giảm squared error. LLM thực có rất nhiều tham số và dữ liệu, nhưng cùng ý tưởng tối ưu mục tiêu. RAG cập nhật context ở inference; fine-tuning cập nhật trọng số. Chính sách lưu dữ liệu và training của dịch vụ là vấn đề riêng.",
+    dev: [
+      "Demo: `y = w·x` với x = 1, mục tiêu 8, `loss = (y − 8)²`. Mỗi bước: `w ← w − η·∂loss/∂w` với η = 0,1.",
+      "LLM dùng cùng ý tưởng nhưng với hàng tỷ tham số; gradient được tính bằng backpropagation.",
+      "Gõ prompt là inference: trọng số không đổi. Fine-tuning mới cập nhật trọng số; RAG chỉ thay đổi context.",
+    ],
+    refs: ["gradient"],
   },
   {
     c: 2,
@@ -130,7 +200,13 @@ const lessons = [
     accent: "→ vector.",
     p: "“Mình thích lập trình” được chia thành token. Tokenizer ánh xạ token sang ID, rồi bảng embedding đổi ID thành vector.",
     take: "Token ID là chỉ số tra cứu, không phải một “điểm ý nghĩa”.",
-    note: "Cách tách [Mình, thích, lập, trình] và các ID hiển thị chỉ là minh họa, không chạy tokenizer thật. Token có thể là từ, mảnh từ, dấu câu hoặc byte; tiếng Việt không nhất thiết một từ = một token. Tokenizer có thể thêm special tokens. Thông tin vị trí cũng được đưa vào quá trình tính.",
+    dev: [
+      "Token có thể là từ, mảnh từ, dấu câu hoặc byte. Với nhiều tokenizer, tiếng Việt tốn nhiều token hơn tiếng Anh cho cùng nội dung.",
+      "Token ID là chỉ số trong vocabulary. Bảng embedding (vocab × d) tra ID ra vector.",
+      "Context window, giới hạn độ dài và chi phí API đều tính theo token, không theo ký tự.",
+      "Tokenizer có thể thêm special token (BOS, EOS…); thông tin vị trí được đưa vào khi tính (ví dụ RoPE).",
+    ],
+    refs: ["tokenizer"],
   },
   {
     c: 2,
@@ -139,7 +215,12 @@ const lessons = [
     accent: "Khác ngữ cảnh.",
     p: "Transformer biến đổi các vector qua nhiều lớp. Attention giúp mỗi vị trí tổng hợp thông tin từ các token được phép nhìn thấy.",
     take: "Vector đầu vào được biến thành biểu diễn có ngữ cảnh.",
-    note: "Demo chỉ tô sáng quan hệ minh họa, không phải attention weights thật. Decoder autoregressive dùng causal mask để không nhìn token tương lai. Attention và feed-forward layers cùng tham gia; attention không phải toàn bộ model. Biểu diễn theo ngữ cảnh không biến ngược thành ID ở giữa mỗi lớp.",
+    dev: [
+      "Attention: trọng số = `softmax(QKᵀ / √d)`; mỗi hàng cộng lại bằng 1, giống các thanh % trong demo.",
+      "Causal mask: mỗi vị trí chỉ nhìn chính nó và các token phía trước.",
+      "Mỗi lớp transformer gồm attention + feed-forward, lặp qua nhiều lớp và nhiều head; attention không phải toàn bộ model.",
+    ],
+    refs: ["transformer"],
   },
   {
     c: 2,
@@ -148,7 +229,13 @@ const lessons = [
     accent: "Rồi từng token.",
     p: "Model xuất logits cho token tiếp theo. Chuyển thành phân phối, chọn một token, nối vào ngữ cảnh rồi lặp lại.",
     take: "Text generation = dự đoán và giải mã nối tiếp, cho đến điều kiện dừng.",
-    note: "Thứ tự: text → token IDs → token embeddings + thông tin vị trí → transformer → logits → chọn token ID → decode. Dừng khi gặp EOS/stop hoặc giới hạn token. KV cache thường tái sử dụng kết quả tính trước đó. Streaming hiển thị dần đầu ra; một lần cập nhật UI có thể chứa nhiều token.",
+    dev: [
+      "Vòng lặp: context → logits → chọn token → nối vào context → lặp lại.",
+      "Dừng khi gặp EOS, stop sequence hoặc chạm giới hạn max tokens.",
+      "KV cache giữ kết quả của các token trước, nên mỗi bước chủ yếu chỉ tính thêm cho token mới.",
+      "Streaming gửi dần token về UI; một lần cập nhật có thể chứa nhiều token.",
+    ],
+    refs: ["generation", "transformer"],
   },
   {
     c: 2,
@@ -157,7 +244,13 @@ const lessons = [
     accent: "viết tiếp.",
     p: "Temperature thay đổi độ tập trung của phân phối token. Giá trị thấp ưu tiên các lựa chọn đang có xác suất cao.",
     take: "Temperature cao không làm model “thông minh hơn” hay bảo đảm sáng tạo tốt hơn.",
-    note: "Demo dùng logits cố định [3,2,1] và softmax(logits/T). T→0 tiến tới chọn argmax; ở đây slider bắt đầu từ 0.2. Top-p/top-k sampling, seed và backend cũng ảnh hưởng kết quả. Xác suất token là xác suất viết tiếp trong ngữ cảnh, không phải độ tin cậy của một sự kiện.",
+    dev: [
+      "`p = softmax(logits / T)`. Demo dùng logits cố định `[3, 2, 1]`.",
+      "T nhỏ → dồn xác suất về token cao nhất (T → 0 gần như greedy). T lớn → phân phối phẳng hơn.",
+      "Top-k / top-p cắt bớt token ít khả năng trước khi lấy mẫu. Seed giúp tái lập, nhưng không phải backend nào cũng bảo đảm.",
+      "Xác suất token là khả năng viết tiếp trong ngữ cảnh, không phải độ tin cậy của một sự thật.",
+    ],
+    refs: ["generation"],
   },
   {
     c: 3,
@@ -166,7 +259,12 @@ const lessons = [
     accent: "đúng tài liệu.",
     p: "RAG = Retrieval-Augmented Generation. Tìm tài liệu liên quan, đưa vào context, rồi yêu cầu model trả lời dựa trên đó.",
     take: "RAG là cách tổ chức hệ thống, không phải một model mới.",
-    note: "Trọng số LLM không tự biết dữ liệu tồn kho vừa thay đổi. RAG bổ sung dữ liệu lúc trả lời; không cần cập nhật trọng số mỗi lần tài liệu đổi. Retrieval có thể dùng keyword, vector, hybrid hoặc công cụ khác; không bắt buộc có vector DB. RAG giảm một số lỗi nhưng không loại bỏ hallucination.",
+    dev: [
+      "Trọng số LLM cố định sau khi train; RAG đưa dữ liệu mới vào context lúc hỏi.",
+      "Retrieval có thể là keyword, vector, hybrid, SQL hay API; không bắt buộc có vector DB.",
+      "RAG giảm nhưng không loại bỏ hallucination; vẫn cần prompt yêu cầu bám nguồn và kiểm tra trích dẫn.",
+    ],
+    refs: ["rag"],
   },
   {
     c: 3,
@@ -175,7 +273,12 @@ const lessons = [
     accent: "Giữ ngữ cảnh.",
     p: "Chia tài liệu thành chunk, gắn nguồn và metadata, tạo embedding rồi lưu vào kho tìm kiếm.",
     take: "Chunk quá nhỏ mất ý. Chunk quá lớn kéo theo thông tin không cần thiết.",
-    note: "Demo chia theo câu để dễ thấy. Production có thể chia theo token, cấu trúc markdown hoặc ngữ nghĩa, với overlap khi cần. Lưu document_id, chunk_id, source và version để trích dẫn, cập nhật và xóa đúng dữ liệu. Nội dung riêng tư cần kiểm soát quyền truy cập ở retrieval.",
+    dev: [
+      "Demo chia theo câu. Thực tế thường chia theo token, heading markdown hoặc ngữ nghĩa, có overlap khi cần.",
+      "Lưu kèm `document_id`, `chunk_id`, `source`, `version` để trích dẫn, cập nhật và xóa đúng.",
+      "Kiểm soát quyền ở bước retrieval: chunk người dùng không được xem thì không được đưa vào context.",
+    ],
+    refs: ["rag"],
   },
   {
     c: 3,
@@ -184,7 +287,13 @@ const lessons = [
     accent: "Chọn phần liên quan.",
     p: "Hybrid search kết hợp từ khóa và vector. Reranker có thể chấm lại từng cặp câu hỏi–đoạn văn.",
     take: "Retrieval tốt là đưa đúng bằng chứng vào context, không chỉ lấy score cao.",
-    note: "BM25 giữ tốt tín hiệu từ khóa/SKU; vector tìm quan hệ ngữ nghĩa. RRF có thể gộp thứ hạng, không cộng trực tiếp các score khác thang. Reranker là bước tùy chọn, tăng độ trễ. D:\\RAG có dense search, BM25, RRF và MMR; MMR cân bằng liên quan/đa dạng, không đồng nhất với cross-encoder reranker.",
+    dev: [
+      "Keyword (BM25) mạnh với mã SKU và tên riêng; vector mạnh khi khách diễn đạt khác chữ trong tài liệu.",
+      "RRF: `score = Σ 1/(k + hạng)`, thường `k = 60`. Gộp theo thứ hạng nên không cần các score cùng thang.",
+      "Reranker (cross-encoder) chấm từng cặp câu hỏi–đoạn: chính xác hơn nhưng chậm, nên chỉ chạy trên top ứng viên.",
+      "MMR là kỹ thuật khác: cân bằng mức liên quan và độ đa dạng, không phải reranker.",
+    ],
+    refs: ["hybrid", "rrf", "rerank"],
   },
   {
     c: 3,
@@ -193,7 +302,12 @@ const lessons = [
     accent: "Trả lời có nguồn.",
     p: "Người dùng chỉ thấy một câu hỏi. Ở dưới là truy vấn, truy hồi, ghép context và gọi model sinh câu trả lời.",
     take: "Không tìm thấy bằng chứng → nói chưa đủ dữ liệu, thay vì đoán.",
-    note: "Đây là câu trả lời theo kịch bản dựa trên dữ liệu demo, không gọi LLM. Đánh giá RAG cần đo retrieval (ví dụ recall@k) và độ bám nguồn của câu trả lời. Trích dẫn phải trỏ đúng đoạn thực sự hỗ trợ phát biểu. Dữ liệu hàng hóa/thời tiết thực tế nên lấy từ nguồn đang có hiệu lực.",
+    dev: [
+      "Retrieval bỏ sót đoạn nào thì câu trả lời thiếu đoạn đó: model không nhắc được thứ không có trong context.",
+      "Đánh giá tách hai phần: retrieval (recall@k) và câu trả lời (bám nguồn, trích dẫn đúng đoạn).",
+      "Không có bằng chứng → trả lời “chưa đủ dữ liệu”, thay vì để model đoán.",
+    ],
+    refs: ["rag"],
   },
   {
     c: 4,
@@ -202,7 +316,12 @@ const lessons = [
     accent: "Tạo điều tiếp theo.",
     p: "Search lấy bản ghi có sẵn. Generative AI tạo văn bản, hình ảnh hoặc nội dung khác từ những quy luật đã học.",
     take: "“AI đang suy nghĩ” là cách nói đơn giản cho nhiều bước tính toán.",
-    note: "LLM không nhất thiết mở web hay đọc DB nếu không được nối công cụ. Reasoning models có thể sử dụng thêm các bước tính hoặc token nội bộ; không nên mô tả như ý thức con người hay coi lời giải thích đầu ra là trace nội bộ chính xác. Tạo nội dung mới không bảo đảm đúng, độc nhất hoặc chưa từng xuất hiện trong dữ liệu.",
+    dev: [
+      "LLM chỉ đọc web hoặc DB khi được nối công cụ (tool calling) hoặc qua RAG.",
+      "Reasoning model có thể sinh thêm bước trung gian trước khi trả lời; lời giải thích hiển thị không phải trace chính xác của phép tính bên trong.",
+      "Nội dung sinh ra không bảo đảm đúng, cũng không bảo đảm chưa từng xuất hiện trong dữ liệu train.",
+    ],
+    refs: ["transformer", "diffusion"],
   },
   {
     c: 4,
@@ -211,28 +330,107 @@ const lessons = [
     accent: "Dần thành hình.",
     p: "Trong latent diffusion, model dùng prompt để hướng dẫn quá trình biến đổi nhiễu qua nhiều bước, rồi decoder tạo ảnh.",
     take: "Thanh trượt là minh họa trực giác; đây không phải quá trình chạy diffusion thật.",
-    note: "Ví dụ: text encoder → conditioning; seed → latent noise; denoiser + scheduler lặp nhiều bước → VAE decoder → ảnh. Khi training, model học dự đoán noise hoặc mục tiêu tương đương từ dữ liệu ảnh có nhiễu. Không phải mọi model ảnh dùng cùng kiến trúc: còn có flow matching và mô hình autoregressive. Ảnh hoodie đã được tạo sẵn; lớp nhiễu chỉ mô phỏng diễn tiến.",
+    dev: [
+      "Latent diffusion: text encoder → conditioning; seed → nhiễu latent; denoiser + scheduler lặp nhiều bước → VAE decoder → ảnh.",
+      "Khi train, model học dự đoán nhiễu (hoặc mục tiêu tương đương) từ ảnh đã bị thêm nhiễu.",
+      "Cùng prompt, seed và cấu hình thường cho lại cùng ảnh.",
+      "Không phải mọi model ảnh là diffusion: còn flow matching và mô hình autoregressive.",
+    ],
+    refs: ["diffusion"],
   },
   {
     c: 4,
-    k: "23 / GHÉP CÁC MẢNH LẠI",
+    k: "23 / MỘT CÂU HỎI ĐI XUYÊN HỆ THỐNG",
+    t: "Một câu hỏi.\nĐi qua",
+    accent: "cả hệ thống.",
+    p: "Khách chỉ gõ một câu. Phía dưới, dữ liệu đổi hình dạng nhiều lần: văn bản → vector → ID + score → prompt → token ID → logits → văn bản.",
+    take: "Embedding model tìm bằng chứng. LLM viết câu trả lời. Hai model, hai vai trò.",
+    dev: [
+      "Đây là một luồng RAG tiêu biểu. Có hệ thống bỏ rerank, chỉ dùng keyword, hoặc để LLM tự gọi công cụ tìm kiếm (agent).",
+      "Hai model khác nhau: embedding model (bước 2) và LLM (bước 6–9), có thể đến từ hai nhà cung cấp khác nhau.",
+      "“AI suy nghĩ” chính là bước 7–8: tính logits rồi chọn token, lặp lại cho từng token. Độ trễ thường tăng theo số token sinh ra.",
+    ],
+    refs: ["rag", "vectorSearch", "tokenizer", "generation"],
+  },
+  {
+    c: 4,
+    k: "24 / GHÉP CÁC MẢNH LẠI",
     t: "Bạn đã mở được",
     accent: "chiếc hộp AI.",
     p: "Một trải nghiệm đơn giản có thể là nhiều thành phần phối hợp. Chọn đúng thành phần cho đúng vấn đề.",
     take: "AI không thay mọi thuật toán. Một hệ thống tốt biết kết hợp chúng.",
-    note: "Tài liệu tham khảo được liên kết bên dưới. Bài học dùng số và đầu ra mô phỏng để giữ nội dung dễ hiểu; không benchmark model hay vector DB. Có thể dùng 26 slide cho một buổi chia sẻ 45–60 phút, dừng ở mỗi demo để người nghe dự đoán trước khi bấm.",
+    dev: [
+      "Thử tự làm: chunk vài tài liệu → embedding → vector DB → prompt yêu cầu trích dẫn.",
+      "Đo trước khi tối ưu: recall@k cho retrieval, độ bám nguồn cho câu trả lời.",
+      "Dữ liệu thay đổi → cập nhật nguồn và embedding; không cần train lại LLM.",
+    ],
+    refs: ["rag"],
+  },
+  // Appended last so existing demo indices stay stable; slide order is set in slidesVi.
+  {
+    c: 1,
+    k: "TỔNG QUAN SEMANTIC SEARCH",
+    t: "Cùng một câu tìm.",
+    accent: "Hai cách hiểu.",
+    p: "Linear Search so từng chữ trong tên sản phẩm. Semantic search biến câu tìm và sản phẩm thành vector, rồi xếp hạng theo độ gần về ý nghĩa.",
+    take: "Các slide tiếp theo mở từng bước: vector → embedding → không gian vector → score → vector database.",
+    dev: [
+      "Semantic search: encode query bằng embedding model → so với các vector đã index → xếp hạng theo similarity → top-k.",
+      "Luôn trả về top-k kèm score, kể cả khi không món nào thật sự phù hợp; cần threshold hoặc filter.",
+      "Với từ khóa chính xác (mã SKU, tên riêng), so khớp chữ vẫn tốt hơn; production thường dùng cả hai.",
+      "k do dev cấu hình: trong SQL với pgvector là `ORDER BY embedding <=> $1 LIMIT 20` (`LIMIT` chính là k), thường kèm ngưỡng score, filter và rerank.",
+    ],
+    refs: ["vectorSearch", "embedding"],
+  },
+  {
+    c: 1,
+    k: "11 / MODEL HỌC CÁCH XẾP CHỖ",
+    t: "Model học cách",
+    accent: "xếp chỗ thế nào?",
+    p: "Ngày xưa, con người phải tự chấm điểm từng món theo từng tiêu chí. Ngày nay, model tự học từ rất nhiều cặp câu: cặp nào cùng ý thì kéo lại gần, khác ý thì đẩy ra xa. Lặp đi lặp lại, bản đồ tự thành hình.",
+    take: "“Tự học” nghĩa là không cần người chấm từng mẫu. Con người vẫn chọn dữ liệu cho model học.",
+    dev: [
+      "Hand-crafted features: người đặt ra các chiều như “độ ấm” rồi chấm điểm. Dễ hiểu nhưng không mở rộng được cho hàng triệu khái niệm.",
+      "Self-supervised: model tự tạo bài tập từ dữ liệu thô, như đoán từ bị che hoặc từ tiếp theo. word2vec (2013): từ xuất hiện trong ngữ cảnh giống nhau thì vector gần nhau.",
+      "Contrastive learning: với mỗi cặp (câu hỏi, đoạn liên quan), loss giảm khi hai vector gần nhau và các đoạn khác ở xa. Cặp thường lấy sẵn từ web: tiêu đề–nội dung, hỏi–đáp.",
+      "Demo tính thật trên mặt phẳng 2D: kéo cặp liên quan về gần (đến khoảng cách 1,2), đẩy cặp khác nhóm ra xa nếu gần hơn 4.",
+    ],
+    refs: ["word2vec", "sbert"],
+  },
+  {
+    c: 1,
+    k: "12 / NGOÀI THỰC TẾ",
+    t: "Dữ liệu để học",
+    accent: "đến từ đâu?",
+    p: "Ban đầu, rất nhiều người được thuê để gán nhãn dữ liệu bằng tay. Sau đó, model học được từ chữ có sẵn trên internet. Gần đây, AI còn giúp tạo dữ liệu để dạy AI khác. Con người vẫn cần để chọn lọc và kiểm tra.",
+    take: "AI không tự dựng kho dữ liệu cho shop của bạn. Bạn vẫn phải đưa dữ liệu của mình vào.",
+    dev: [
+      "Data labelling vẫn là một nghề: gán nhãn ảnh và văn bản, xếp hạng câu trả lời để tinh chỉnh LLM (RLHF), dựng bộ dữ liệu đánh giá.",
+      "Synthetic data: LLM sinh cặp câu hỏi–đoạn văn để train embedding model; cần lọc chất lượng và kiểm tra trùng lặp với dữ liệu đánh giá.",
+      "Train lặp lại trên dữ liệu do model sinh ra có thể làm model “quên” phần hiếm của phân phối (model collapse).",
+    ],
+    refs: ["imagenet", "instructgpt", "synthetic", "collapse"],
+  },
+  // Visual-only slide (full width, no intro text).
+  {
+    c: 2,
+    k: "TỪ PROMPT ĐẾN CODE",
+    t: "Từ prompt",
+    accent: "đến code.",
+    p: "",
+    take: "",
+    dev: [] as string[],
+    refs: ["tokenizer", "transformer", "generation"],
+    full: true,
   },
 ];
 export type Slide = (typeof lessons)[number] & {
   demo: number;
   divider?: "before" | "after";
+  full?: boolean;
 };
-const mapped: Slide[] = lessons.map((slide, demo) => ({
-  ...slide,
-  c: demo === 4 ? 1 : slide.c,
-  demo,
-}));
-export const slides: Slide[] = [
+const mapped: Slide[] = lessons.map((slide, demo) => ({ ...slide, demo }));
+const slidesVi: Slide[] = [
   {
     c: 0,
     demo: -1,
@@ -242,9 +440,11 @@ export const slides: Slide[] = [
     accent: "có AI",
     p: "Bắt đầu với dữ liệu, điều kiện và những phép so sánh.",
     take: "Linear Search → Metadata → Inverted index",
-    note: "Phần này nói về tìm kiếm chưa dùng model học máy. Đây là một trình tự giải thích, không phải khẳng định mọi hệ thống trước AI đều dùng Linear Search.",
+    dev: [],
+    refs: [],
   },
-  ...mapped.slice(0, 4),
+  // Lesson 4 ("Đi Đà Lạt") closes the first part: the problem keyword search cannot solve.
+  ...mapped.slice(0, 5),
   {
     c: 1,
     demo: -1,
@@ -254,16 +454,43 @@ export const slides: Slide[] = [
     accent: "có AI",
     p: "Từ so khớp câu chữ đến biểu diễn và tìm kiếm theo ý nghĩa.",
     take: "Embedding → Vector → Semantic search",
-    note: "AI bổ sung cách biểu diễn ngữ nghĩa. Index, từ khóa và metadata vẫn hữu ích và thường được kết hợp trong cùng hệ thống.",
+    dev: [],
+    refs: [],
   },
-  ...mapped.slice(4),
+  // Overview first, then the store, how points get there, how the model
+  // learns, where training data comes from. Lessons 5 (taste vector) and
+  // 7 (3D space) are no longer shown: the overview and store cover them.
+  mapped[25],
+  mapped[9],
+  mapped[6],
+  mapped[26],
+  mapped[27],
+  mapped[8],
+  mapped[10],
+  // "From prompt to code" overview opens the Model & LLM part.
+  mapped[28],
+  ...mapped.slice(11, 25),
 ];
+if (lessonsEn.length !== lessons.length)
+  throw new Error("content-en.ts must have one entry per lesson");
+// Shared structure (c, refs, demo, divider) with English text on top.
+const slidesEn: Slide[] = slidesVi.map((s) => ({
+  ...s,
+  ...(s.divider ? dividersEn[s.divider] : lessonsEn[s.demo]),
+}));
+export const getSlides = (lang: Lang) => (lang === "en" ? slidesEn : slidesVi);
+export const getChapters = (lang: Lang) =>
+  lang === "en" ? chaptersEn : chaptersVi;
+// `name`/`color` are Vietnamese and `color` doubles as the filter key.
+// English names keep the same search results: "shirt" matches P01, P03, P04, P05.
 export const products = [
   {
     id: "P01",
     name: "Áo thun cotton",
     price: 189,
     color: "Kem",
+    nameEn: "Cotton shirt",
+    colorEn: "Cream",
     v: [2, 8, 2],
     warm: false,
   },
@@ -272,6 +499,8 @@ export const products = [
     name: "Hoodie lavender",
     price: 349,
     color: "Tím",
+    nameEn: "Lavender hoodie",
+    colorEn: "Purple",
     v: [8, 9, 2],
     warm: true,
   },
@@ -280,6 +509,8 @@ export const products = [
     name: "Áo khoác ấm",
     price: 599,
     color: "Xanh",
+    nameEn: "Warm shirt jacket",
+    colorEn: "Blue",
     v: [10, 6, 5],
     warm: true,
   },
@@ -288,6 +519,8 @@ export const products = [
     name: "Áo sơ mi trắng",
     price: 299,
     color: "Trắng",
+    nameEn: "White dress shirt",
+    colorEn: "White",
     v: [3, 4, 10],
     warm: false,
   },
@@ -296,6 +529,8 @@ export const products = [
     name: "Áo len tím",
     price: 379,
     color: "Tím",
+    nameEn: "Purple wool shirt",
+    colorEn: "Purple",
     v: [9, 7, 5],
     warm: true,
   },
@@ -304,21 +539,94 @@ export const products = [
     name: "Quần short",
     price: 229,
     color: "Kem",
+    nameEn: "Shorts",
+    colorEn: "Cream",
     v: [1, 8, 1],
     warm: false,
   },
 ];
-export const sources = [
-  [
+// [title, url, English title when it differs]
+export const sources: Record<string, [string, string, string?]> = {
+  linear: ["Linear search", "https://en.wikipedia.org/wiki/Linear_search"],
+  sqlIndex: [
+    "PostgreSQL: Index",
+    "https://www.postgresql.org/docs/current/indexes-intro.html",
+  ],
+  invIndex: [
+    "Inverted index (IR Book)",
+    "https://nlp.stanford.edu/IR-book/html/htmledition/a-first-take-at-building-an-inverted-index-1.html",
+  ],
+  bm25: [
+    "Okapi BM25 (IR Book)",
+    "https://nlp.stanford.edu/IR-book/html/htmledition/okapi-bm25-a-non-binary-model-1.html",
+  ],
+  embedding: [
+    "Embeddings (Google ML Crash Course)",
+    "https://developers.google.com/machine-learning/crash-course/embeddings",
+  ],
+  vectorSearch: [
+    "Vector search & score",
+    "https://qdrant.tech/documentation/search/",
+  ],
+  filtering: [
+    "Filter trong vector DB",
+    "https://qdrant.tech/documentation/concepts/filtering/",
+    "Filtering in a vector DB",
+  ],
+  hnsw: [
+    "HNSW — bài báo gốc",
+    "https://arxiv.org/abs/1603.09320",
+    "HNSW — original paper",
+  ],
+  gradient: [
+    "Gradient descent (Google ML Crash Course)",
+    "https://developers.google.com/machine-learning/crash-course/linear-regression/gradient-descent",
+  ],
+  tokenizer: [
     "Tokenizer & token IDs",
     "https://huggingface.co/docs/transformers/main_classes/tokenizer",
   ],
-  ["Transformer / Attention", "https://arxiv.org/abs/1706.03762"],
-  [
+  transformer: ["Transformer / Attention", "https://arxiv.org/abs/1706.03762"],
+  generation: [
     "Sinh token & sampling",
     "https://huggingface.co/docs/transformers/main/en/generation_strategies",
+    "Token generation & sampling",
   ],
-  ["Vector search & score", "https://qdrant.tech/documentation/search/"],
-  ["RAG — bài báo gốc", "https://arxiv.org/abs/2005.11401"],
-  ["Latent Diffusion", "https://arxiv.org/abs/2112.10752"],
-];
+  rag: [
+    "RAG — bài báo gốc",
+    "https://arxiv.org/abs/2005.11401",
+    "RAG — original paper",
+  ],
+  hybrid: [
+    "Hybrid query (Qdrant)",
+    "https://qdrant.tech/documentation/concepts/hybrid-queries/",
+  ],
+  rrf: [
+    "Reciprocal Rank Fusion",
+    "https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf",
+  ],
+  rerank: [
+    "Retrieve & Re-Rank (SBERT)",
+    "https://www.sbert.net/examples/applications/retrieve_rerank/README.html",
+  ],
+  diffusion: ["Latent Diffusion", "https://arxiv.org/abs/2112.10752"],
+  word2vec: ["word2vec (Mikolov et al., 2013)", "https://arxiv.org/abs/1301.3781"],
+  sbert: ["Sentence-BERT (2019)", "https://arxiv.org/abs/1908.10084"],
+  imagenet: [
+    "ImageNet (CVPR 2009)",
+    "https://www.image-net.org/static_files/papers/imagenet_cvpr09.pdf",
+  ],
+  instructgpt: [
+    "InstructGPT — RLHF (2022)",
+    "https://arxiv.org/abs/2203.02155",
+  ],
+  synthetic: [
+    "Embedding từ dữ liệu tổng hợp (2024)",
+    "https://arxiv.org/abs/2401.00368",
+    "Embeddings from synthetic data (2024)",
+  ],
+  collapse: [
+    "Model collapse (2023)",
+    "https://arxiv.org/abs/2305.17493",
+  ],
+};
