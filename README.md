@@ -1,6 +1,10 @@
 # AI Playground — Từ zero đến aha!
 
-Website React + TypeScript + Vite gồm 26 slide tiếng Việt để chia sẻ nền tảng AI cho developer mới bắt đầu. Source chính nằm trong D:\ai-playground.
+Website React + TypeScript + Vite gồm 29 slide (tiếng Việt, có bản tiếng Anh) để chia sẻ nền tảng AI cho developer mới bắt đầu. Source chính nằm trong D:\ai-playground.
+
+## Context cho agent tiếp tục
+
+Đọc [Requirements & Agent Handoff](docs/AGENT-HANDOFF.md) để nắm yêu cầu ban đầu, các chỉnh sửa đã chốt, cấu trúc code và lưu ý kỹ thuật.
 
 ## Chạy local
 
@@ -25,25 +29,30 @@ Build tĩnh ở dist/. Có thể đưa thư mục này lên static hosting. Khô
 
 - Nút Tiếp theo / quay lại và phím mũi tên trái, phải (khi không focus control).
 - Nội dung: nhảy đến bất cứ slide nào.
-- Hiểu thêm một chút: ghi chú kỹ thuật, giới hạn của mô phỏng, nguồn tham khảo.
+- VI | EN (footer, cạnh Nội dung): đổi ngôn ngữ; lựa chọn được nhớ trong localStorage.
+- Dưới mỗi phần giới thiệu: 2–4 gạch đầu dòng kỹ thuật cho developer và nguồn tham khảo, luôn hiển thị.
 - URL #slide-3 mở trực tiếp demo Linear Search.
 - Vector 3D: kéo để xoay hoặc dùng slider; slider hỗ trợ mũi tên và Home/End.
 
 ## Nội dung
 
 1: Trước khi có AI.
-2–5: ecommerce, Linear Search trên bảng dữ liệu, metadata, inverted index.
-6: Sau khi có AI.
-7–13: semantic search, vector, embedding, 3D, cosine, vector DB, pipeline.
-14–19: model, training/inference, tokenizer, attention, generation, temperature.
-20–23: RAG, chunking, hybrid/rerank, trả lời dựa vào nguồn.
-24–26: generative AI, diffusion, câu hỏi tổng kết.
+2–6: ecommerce, Linear Search trên bảng dữ liệu, metadata, inverted index, “áo đi Đà Lạt” (vấn đề keyword chưa giải được).
+7: Sau khi có AI.
+8: tổng quan semantic search — câu tìm thành một điểm trong không gian 3D, tìm top-3 lân cận.
+9–14: kho vector (vector DB), embedding đặt điểm vào kho, model tự học cách xếp chỗ, dữ liệu để học đến từ đâu, cosine, pipeline.
+15: từ prompt đến code — animation toàn bộ một lượt gọi LLM (slide chỉ có hình).
+16–21: model, training/inference, tokenizer, attention (causal), generation, temperature.
+22–25: RAG, chunking, hybrid (RRF)/rerank, trả lời dựa vào nguồn.
+26–29: generative AI, diffusion, một câu hỏi đi xuyên hệ thống, câu hỏi tổng kết.
 
 Gợi ý thời lượng: 45–60 phút. Trước mỗi thao tác, mời người nghe dự đoán điều gì sẽ xảy ra.
 
 ## Chỉnh sửa
 
-- app/content.ts: nội dung 26 slide, ghi chú, sản phẩm và nguồn.
+- app/content.ts: nội dung 29 slide, gạch đầu dòng kỹ thuật (dev), sản phẩm và nguồn (mỗi bài chọn nguồn qua refs).
+- app/content-en.ts: bản tiếng Anh của từng bài (cùng thứ tự với lessons trong content.ts).
+- app/i18n.tsx: context ngôn ngữ và hook useT() → t(vi, en), num().
 - app/demos.tsx: các demo tương tác.
 - app/database-demo.tsx: bảng dữ liệu, quét từng dòng/tự động, filter và inverted index.
 - app/page.tsx: layout, slide phân đoạn, highlight từ khóa, điều hướng và mục lục.
@@ -82,3 +91,4 @@ Mô phỏng giáo dục: vector embedding, tokenizer/ID, attention, output sinh 
 - https://arxiv.org/abs/2112.10752
 
 Đã đối chiếu tài liệu chính thức ngày 27/09/2026. Nội dung nguồn D:\RAG được tham khảo và diễn giải, không sao chép toàn bộ dự án hay dữ liệu riêng tư vào website.
+
