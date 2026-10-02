@@ -87,7 +87,7 @@ function ProductCard({
       <div className={"product-art tone-" + ((Number(p.id.slice(1)) - 1) % 3)}>
         {p.id === "P02" ? (
           <img
-            src="/hoodie.png"
+            src={`${import.meta.env.BASE_URL}hoodie.png`}
             alt={t(
               "Hoodie lavender có ngôi sao vàng",
               "Lavender hoodie with a yellow star",
@@ -4929,7 +4929,7 @@ function Diffusion() {
       />
       <div className="diffusion-image">
         <img
-          src="/hoodie.png"
+          src={`${import.meta.env.BASE_URL}hoodie.png`}
           alt={t(
             "Ảnh hoodie tím với ngôi sao vàng được tạo sẵn để minh họa diffusion",
             "Pre-made image of a purple hoodie with a yellow star, used to illustrate diffusion",
